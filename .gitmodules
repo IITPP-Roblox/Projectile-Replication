@@ -1,0 +1,6 @@
+[submodule "module/LocalAudio"]
+	path = module/LocalAudio
+	url = https://github.com/IITPP-Roblox/LocalAudio.git
+[submodule "module/LocalTween"]
+	path = module/LocalTween
+	url = https://github.com/IITPP-Roblox/LocalTween.git

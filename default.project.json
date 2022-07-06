@@ -1,0 +1,12 @@
+{
+    "name": "ProjectileReplication",
+    "tree": {
+        "$path": "./src",
+        "LocalAudio": {
+            "$path": "./module/LocalAudio"
+        },
+        "LocalTween": {
+            "$path": "./module/LocalTween"
+        }
+    }
+}
