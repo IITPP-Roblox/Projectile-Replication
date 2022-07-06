@@ -6,18 +6,18 @@ This should be the only script that is modified for an individual gun.
 --]]
 
 return {
-    --Name of the preset of the bullet.
+    --Name of the preset of the projectile.
     --The preset must exist in ReplicatedStorage.Data.ProjectilePresets.
     ProjectilePreset = "DemoProjectile",
 
-    --Maximum random angle from the aim that the bullet will fire from.
+    --Maximum random angle from the aim that the projectile will fire from.
     ProjectileSpread = math.rad(2),
 
     --Delay time between activating the gun and firing.
     --If nil, no delay will be used.
     FireDelay = nil,
 
-    --Time between firing bullets.
+    --Time between firing projectiles.
     CooldownTime = 0.075,
 
     --Time requires to reload the gun.
@@ -26,7 +26,7 @@ return {
     --If true, the user is able to hold down their activation input instead of spamming it.
     FullAutomatic = true,
 
-    --Bullets to fire for each round.
+    --Projectiles to fire for each round.
     ProjectilesPerRound = 1,
 
     --Total rounds that can be fired between reloads.

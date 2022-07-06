@@ -34,15 +34,15 @@ local Firing = false
 
 
 --[[
-Converts a number of bullets to a display number.
+Converts a number of projectiles to a display number.
 --]]
-local function GetDisplayBullets(Bullets: number): string
-    return tostring(math.floor(Bullets / (Configuration.ProjectilesPerRound or 1)))
+local function GetDisplayProjectiles(Projectiles: number): string
+    return tostring(math.floor(Projectiles / (Configuration.ProjectilesPerRound or 1)))
 end
 
 --[[
 Returns the current mouse position using the same raycasting
-logic used by the bullets.
+logic used by the projectiles.
 --]]
 local function GetMousePosition(): Vector3
     local CameraRay = Camera:ScreenPointToRay(CurrentMouse.X, CurrentMouse.Y, 10000)
@@ -146,7 +146,7 @@ Tool.Equipped:Connect(function(Mouse: Mouse)
     AmmoText.TextStrokeTransparency = 0
     AmmoText.TextScaled = true
     AmmoText.TextXAlignment = Enum.TextXAlignment.Left
-    AmmoText.Text = GetDisplayBullets(RemainingRounds.Value).." / "..GetDisplayBullets(Configuration.TotalRounds)
+    AmmoText.Text = GetDisplayProjectiles(RemainingRounds.Value).." / "..GetDisplayProjectiles(Configuration.TotalRounds)
     AmmoText.Parent = CrossFrame
 
     local ReloadingText = Instance.new("TextLabel")
@@ -164,7 +164,7 @@ Tool.Equipped:Connect(function(Mouse: Mouse)
     ReloadingText.Parent = CrossFrame
 
     RemainingRounds.Changed:Connect(function()
-        AmmoText.Text = GetDisplayBullets(RemainingRounds.Value).." / "..GetDisplayBullets(Configuration.TotalRounds)
+        AmmoText.Text = GetDisplayProjectiles(RemainingRounds.Value).." / "..GetDisplayProjectiles(Configuration.TotalRounds)
     end)
     ReloadingValue.Changed:Connect(function()
         ReloadingText.Visible = ReloadingValue.Value

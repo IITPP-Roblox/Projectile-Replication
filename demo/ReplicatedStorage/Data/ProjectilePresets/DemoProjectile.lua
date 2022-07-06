@@ -17,10 +17,10 @@ return {
     },
     DefaultFireSound = "Demo.Fire",
     DefaultReloadSound = "Demo.Reload",
-    OnHitClient = function(Part, Position, Bullet)
-        print("Bullet hit "..tostring(Part).." at position "..tostring(Position).." using bullet "..tostring(Bullet).." on the client")
+    OnHitClient = function(Part, Position, Projectile)
+        print("Projectile hit "..tostring(Part).." at position "..tostring(Position).." using projectile "..tostring(Projectile).." on the client")
     end,
-    OnHitServer = function(Part, Position, Bullet)
-        print("Bullet hit "..tostring(Part).." at position "..tostring(Position).." using bullet "..tostring(Bullet).." on the server")
+    OnHitServer = function(Part, Position, Projectile)
+        print("Projectile hit "..tostring(Part).." at position "..tostring(Position).." using projectile "..tostring(Projectile).." on the server")
     end,
 }
