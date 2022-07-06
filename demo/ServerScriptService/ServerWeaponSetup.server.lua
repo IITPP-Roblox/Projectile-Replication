@@ -27,7 +27,7 @@ Handle.Parent = Tool
 
 local StartAttachment = Instance.new("Attachment")
 StartAttachment.Name = "StartAttachment"
-StartAttachment.CFrame = CFrame.new(0, 0.1, 2.5)
+StartAttachment.CFrame = CFrame.new(0, 0.1, 2.5) * CFrame.Angles(0, math.pi, 0)
 StartAttachment.Parent = Handle
 
 local LeftHandHoldAttachment = Instance.new("Attachment")

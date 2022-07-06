@@ -25,8 +25,8 @@ local ChargedPercentValue = State:FindFirstChild("ChargedPercent")
 local RemainingRounds = State:WaitForChild("RemainingRounds")
 local ReloadingValue = State:WaitForChild("Reloading")
 
-
 local CurrentMouse: Mouse? = nil
+local CurrentVRAmmoGui: BillboardGui? = nil
 local LastFireTime = 0
 local Equipped = false
 local Firing = false
@@ -45,9 +45,13 @@ Returns the current mouse position using the same raycasting
 logic used by the projectiles.
 --]]
 local function GetMousePosition(): Vector3
-    local CameraRay = Camera:ScreenPointToRay(CurrentMouse.X, CurrentMouse.Y, 10000)
-    local _, EndPosition = Projectile.RayCast(Camera.CFrame.Position, CameraRay.Origin + CameraRay.Direction, {Players.LocalPlayer.Character, Camera})
-    return EndPosition
+    if UserInputService.VREnabled then
+        return (StartAttachment.WorldCFrame * CFrame.new(0, 0, -10000)).Position
+    else
+        local CameraRay = Camera:ScreenPointToRay(CurrentMouse.X, CurrentMouse.Y, 10000)
+        local _, EndPosition = Projectile.RayCast(Camera.CFrame.Position, CameraRay.Origin + CameraRay.Direction, {Players.LocalPlayer.Character, Camera})
+        return EndPosition
+    end
 end
 
 --[[
@@ -90,109 +94,160 @@ end
 Tool.Equipped:Connect(function(Mouse: Mouse)
     Equipped = true
     CurrentMouse = Mouse
-    UserInputService.MouseIconEnabled = false
 
-    --Create the crosshair.
-    local CrosshairGui = Instance.new("ScreenGui")
-    CrosshairGui.Name = "CrossHairGui"
-    CrosshairGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+    --Handle VR and non-VR players.
+    --The crosshair is not supported for VR users and animating the arms is not recommended.
+    local CrosshairGui, CrossFrame, AmmoText, ReloadingText = nil, nil, nil, nil
+    if UserInputService.VREnabled then
+        --Create the ammo display.
+        CurrentVRAmmoGui = Instance.new("BillboardGui")
+        CurrentVRAmmoGui.StudsOffsetWorldSpace = Vector3.new(-1.2, 0, 0)
+        CurrentVRAmmoGui.Size = UDim2.new(3, 0, 0.75, 0)
+        CurrentVRAmmoGui.Adornee = StartAttachment
+        CurrentVRAmmoGui.Parent = StartAttachment
 
-    local CrossFrame = Instance.new("Frame")
-    CrossFrame.BackgroundTransparency = 1
-    CrossFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    CrossFrame.Size = UDim2.new(0.075, 0, 0.075, 0)
-    CrossFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
-    CrossFrame.Parent = CrosshairGui
-
-    local CrosshairTop = Instance.new("Frame")
-    CrosshairTop.BackgroundColor3 = Color3.new(1, 1, 1)
-    CrosshairTop.BorderColor3 = Color3.new(0, 0, 0)
-    CrosshairTop.Size = UDim2.new(0, 2, 0.3, 0)
-    CrosshairTop.Position = UDim2.new(0.5, 0, 0, 0)
-    CrosshairTop.AnchorPoint = Vector2.new(0.5, 0)
-    CrosshairTop.Parent = CrossFrame
-
-    local CrosshairBottom = Instance.new("Frame")
-    CrosshairBottom.BackgroundColor3 = Color3.new(1, 1, 1)
-    CrosshairBottom.BorderColor3 = Color3.new(0, 0, 0)
-    CrosshairBottom.Size = UDim2.new(0, 2, 0.3, 0)
-    CrosshairBottom.Position = UDim2.new(0.5, 0, 1, 0)
-    CrosshairBottom.AnchorPoint = Vector2.new(0.5, 1)
-    CrosshairBottom.Parent = CrossFrame
-
-    local CrosshairLeft = Instance.new("Frame")
-    CrosshairLeft.BackgroundColor3 = Color3.new(1, 1, 1)
-    CrosshairLeft.BorderColor3 = Color3.new(0, 0, 0)
-    CrosshairLeft.Size = UDim2.new(0.3, 0, 0, 2)
-    CrosshairLeft.Position = UDim2.new(0, 0, 0.5, 0)
-    CrosshairLeft.AnchorPoint = Vector2.new(0, 0.5)
-    CrosshairLeft.Parent = CrossFrame
-
-    local CrosshairRight = Instance.new("Frame")
-    CrosshairRight.BackgroundColor3 = Color3.new(1, 1, 1)
-    CrosshairRight.BorderColor3 = Color3.new(0, 0, 0)
-    CrosshairRight.Size = UDim2.new(0.3, 0, 0, 2)
-    CrosshairRight.Position = UDim2.new(1, 0, 0.5, 0)
-    CrosshairRight.AnchorPoint = Vector2.new(1, 0.5)
-    CrosshairRight.Parent = CrossFrame
-
-    local AmmoText = Instance.new("TextLabel")
-    AmmoText.BackgroundTransparency = 1
-    AmmoText.Size = UDim2.new(5, 0, 0.4, 0)
-    AmmoText.Position = UDim2.new(0.7, 2, 0.55, 2)
-    AmmoText.Font = Enum.Font.SciFi
-    AmmoText.TextColor3 = Color3.new(1, 1, 1)
-    AmmoText.TextStrokeColor3 = Color3.new(0, 0, 0)
-    AmmoText.TextStrokeTransparency = 0
-    AmmoText.TextScaled = true
-    AmmoText.TextXAlignment = Enum.TextXAlignment.Left
-    AmmoText.Text = GetDisplayProjectiles(RemainingRounds.Value).." / "..GetDisplayProjectiles(Configuration.TotalRounds)
-    AmmoText.Parent = CrossFrame
-
-    local ReloadingText = Instance.new("TextLabel")
-    ReloadingText.BackgroundTransparency = 1
-    ReloadingText.Size = UDim2.new(5, 0, 0.3, 0)
-    ReloadingText.Position = UDim2.new(0.8, 2, 0.9, 2)
-    ReloadingText.Visible = ReloadingValue.Value
-    ReloadingText.Font = Enum.Font.SciFi
-    ReloadingText.TextColor3 = Color3.new(1, 1, 1)
-    ReloadingText.TextStrokeColor3 = Color3.new(0, 0, 0)
-    ReloadingText.TextStrokeTransparency = 0
-    ReloadingText.TextScaled = true
-    ReloadingText.TextXAlignment = Enum.TextXAlignment.Left
-    ReloadingText.Text = "Reloading"
-    ReloadingText.Parent = CrossFrame
-
-    RemainingRounds.Changed:Connect(function()
+        AmmoText = Instance.new("TextLabel")
+        AmmoText.BackgroundTransparency = 1
+        AmmoText.Size = UDim2.new(1, 0, 0.7, 0)
+        AmmoText.Position = UDim2.new(0, 0, 0, 0)
+        AmmoText.Font = Enum.Font.SciFi
+        AmmoText.TextColor3 = Color3.new(1, 1, 1)
+        AmmoText.TextStrokeColor3 = Color3.new(0, 0, 0)
+        AmmoText.TextStrokeTransparency = 0
+        AmmoText.TextScaled = true
+        AmmoText.TextXAlignment = Enum.TextXAlignment.Center
         AmmoText.Text = GetDisplayProjectiles(RemainingRounds.Value).." / "..GetDisplayProjectiles(Configuration.TotalRounds)
-    end)
-    ReloadingValue.Changed:Connect(function()
-        ReloadingText.Visible = ReloadingValue.Value
-    end)
+        AmmoText.Parent = CurrentVRAmmoGui
 
-    --Update the aim.
-    local Character = Tool.Parent
-    if not Character then return end
-    while Equipped do
-        --Update the crosshair in a pcall. If the mouse becomes inactive, it throws an error.
-        local CrosshairUpdated, _ = pcall(function()
-            CrossFrame.Position = UDim2.new(0, Mouse.X, 0, Mouse.Y)
-            ProjectileReplication:Aim(Players.LocalPlayer, GetMousePosition())
-        end)
-        if not CrosshairUpdated then
-            break
-        end
-        RunService.RenderStepped:Wait()
+        ReloadingText = Instance.new("TextLabel")
+        ReloadingText.BackgroundTransparency = 1
+        ReloadingText.Size = UDim2.new(1, 0, 0.35, 0)
+        ReloadingText.Position = UDim2.new(0, 0, 0.65, 0)
+        ReloadingText.Visible = ReloadingValue.Value
+        ReloadingText.Font = Enum.Font.SciFi
+        ReloadingText.TextColor3 = Color3.new(1, 1, 1)
+        ReloadingText.TextStrokeColor3 = Color3.new(0, 0, 0)
+        ReloadingText.TextStrokeTransparency = 0
+        ReloadingText.TextScaled = true
+        ReloadingText.TextXAlignment = Enum.TextXAlignment.Center
+        ReloadingText.Text = "Reloading"
+        ReloadingText.Parent = CurrentVRAmmoGui
+    else
+        --Create the crosshair.
+        UserInputService.MouseIconEnabled = false
+        CrosshairGui = Instance.new("ScreenGui")
+        CrosshairGui.Name = "CrossHairGui"
+        CrosshairGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+        CrossFrame = Instance.new("Frame")
+        CrossFrame.BackgroundTransparency = 1
+        CrossFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+        CrossFrame.Size = UDim2.new(0.075, 0, 0.075, 0)
+        CrossFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
+        CrossFrame.Parent = CrosshairGui
+
+        local CrosshairTop = Instance.new("Frame")
+        CrosshairTop.BackgroundColor3 = Color3.new(1, 1, 1)
+        CrosshairTop.BorderColor3 = Color3.new(0, 0, 0)
+        CrosshairTop.Size = UDim2.new(0, 2, 0.3, 0)
+        CrosshairTop.Position = UDim2.new(0.5, 0, 0, 0)
+        CrosshairTop.AnchorPoint = Vector2.new(0.5, 0)
+        CrosshairTop.Parent = CrossFrame
+
+        local CrosshairBottom = Instance.new("Frame")
+        CrosshairBottom.BackgroundColor3 = Color3.new(1, 1, 1)
+        CrosshairBottom.BorderColor3 = Color3.new(0, 0, 0)
+        CrosshairBottom.Size = UDim2.new(0, 2, 0.3, 0)
+        CrosshairBottom.Position = UDim2.new(0.5, 0, 1, 0)
+        CrosshairBottom.AnchorPoint = Vector2.new(0.5, 1)
+        CrosshairBottom.Parent = CrossFrame
+
+        local CrosshairLeft = Instance.new("Frame")
+        CrosshairLeft.BackgroundColor3 = Color3.new(1, 1, 1)
+        CrosshairLeft.BorderColor3 = Color3.new(0, 0, 0)
+        CrosshairLeft.Size = UDim2.new(0.3, 0, 0, 2)
+        CrosshairLeft.Position = UDim2.new(0, 0, 0.5, 0)
+        CrosshairLeft.AnchorPoint = Vector2.new(0, 0.5)
+        CrosshairLeft.Parent = CrossFrame
+
+        local CrosshairRight = Instance.new("Frame")
+        CrosshairRight.BackgroundColor3 = Color3.new(1, 1, 1)
+        CrosshairRight.BorderColor3 = Color3.new(0, 0, 0)
+        CrosshairRight.Size = UDim2.new(0.3, 0, 0, 2)
+        CrosshairRight.Position = UDim2.new(1, 0, 0.5, 0)
+        CrosshairRight.AnchorPoint = Vector2.new(1, 0.5)
+        CrosshairRight.Parent = CrossFrame
+
+        AmmoText = Instance.new("TextLabel")
+        AmmoText.BackgroundTransparency = 1
+        AmmoText.Size = UDim2.new(5, 0, 0.4, 0)
+        AmmoText.Position = UDim2.new(0.7, 2, 0.55, 2)
+        AmmoText.Font = Enum.Font.SciFi
+        AmmoText.TextColor3 = Color3.new(1, 1, 1)
+        AmmoText.TextStrokeColor3 = Color3.new(0, 0, 0)
+        AmmoText.TextStrokeTransparency = 0
+        AmmoText.TextScaled = true
+        AmmoText.TextXAlignment = Enum.TextXAlignment.Left
+        AmmoText.Text = GetDisplayProjectiles(RemainingRounds.Value).." / "..GetDisplayProjectiles(Configuration.TotalRounds)
+        AmmoText.Parent = CrossFrame
+
+        ReloadingText = Instance.new("TextLabel")
+        ReloadingText.BackgroundTransparency = 1
+        ReloadingText.Size = UDim2.new(5, 0, 0.3, 0)
+        ReloadingText.Position = UDim2.new(0.8, 2, 0.9, 2)
+        ReloadingText.Visible = ReloadingValue.Value
+        ReloadingText.Font = Enum.Font.SciFi
+        ReloadingText.TextColor3 = Color3.new(1, 1, 1)
+        ReloadingText.TextStrokeColor3 = Color3.new(0, 0, 0)
+        ReloadingText.TextStrokeTransparency = 0
+        ReloadingText.TextScaled = true
+        ReloadingText.TextXAlignment = Enum.TextXAlignment.Left
+        ReloadingText.Text = "Reloading"
+        ReloadingText.Parent = CrossFrame
     end
 
-    --Destroy the crosshair.
-    CrossFrame:Destroy()
+    --Connect the ammo changing.
+    if AmmoText then
+        RemainingRounds.Changed:Connect(function()
+            AmmoText.Text = GetDisplayProjectiles(RemainingRounds.Value).." / "..GetDisplayProjectiles(Configuration.TotalRounds)
+        end)
+    end
+    if ReloadingText then
+        ReloadingValue.Changed:Connect(function()
+            ReloadingText.Visible = ReloadingValue.Value
+        end)
+    end
+
+    --Update the aim if the user isn't in VR.
+    if CrossFrame then
+        local Character = Tool.Parent
+        if not Character then return end
+        while Equipped do
+            --Update the crosshair in a pcall. If the mouse becomes inactive, it throws an error.
+            local CrosshairUpdated, _ = pcall(function()
+                CrossFrame.Position = UDim2.new(0, Mouse.X, 0, Mouse.Y)
+                ProjectileReplication:Aim(Players.LocalPlayer, GetMousePosition())
+            end)
+            if not CrosshairUpdated then
+                break
+            end
+            RunService.RenderStepped:Wait()
+        end
+
+        --Destroy the crosshair.
+        CrosshairGui:Destroy()
+    end
 end)
 
 Tool.Unequipped:Connect(function()
     Equipped = false
     Firing = false
     UserInputService.MouseIconEnabled = true
+
+    if CurrentVRAmmoGui then
+        CurrentVRAmmoGui:Destroy()
+        CurrentVRAmmoGui = nil
+    end
 end)
 
 --Connect using the tool.

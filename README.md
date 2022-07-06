@@ -56,6 +56,11 @@ a `Handle`. The `Handle` must have an `Attachment` named `"StartAttachment"`
 and optional `Attachment` for the left arm named `"LeftHandHold"`.
 There also must be a `Configuration` like [the demo configuration](demo/ServerScriptService/DemoConfiguration.lua).
 
+### Nexus VR Character Model (Optional)
+The standard weapons support [Nexus VR Character Model](https://github.com/TheNexusAvenger/Nexus-VR-Character-Model).
+Adding [the loader](https://www.roblox.com/library/1547146240/Nexus-VR-Character-Model)
+to the game will make Nexus VR Character Model load when the game starts.
+
 # Firing Projectiles Directly
 In the case a projectile needs to be fired without using a standard
 weapon, such as the turrets in the Innovation Inc Thermal Power Plant, use
@@ -76,8 +81,6 @@ Thermal Plant Discord server.
   to gravity or other forces.
 * Touchscreen Support - Standard weapons do not support touchscreens. This makes
   them not work optimally on mobile platforms.
-* VR Support - Animations are not disabled when using VR, which makes them
-  act unpredictably for [Nexus VR Character Model](https://github.com/TheNexusAvenger/Nexus-VR-Character-Model).
 * Fix Multi-Projectile Exploit - There is an active exploit for standard weapons
   where the reload delay is ignored as a security check if `ProjectilePerRound`
   is more than 1.
