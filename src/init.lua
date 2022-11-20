@@ -101,6 +101,16 @@ function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, Pre
         task.wait(Configuration.FireDelay)
     end
     ProjectileObject:Fire(StartCFrame, Preset.Speed, Preset.LifetimeSeconds, {Source or Players.LocalPlayer.Character})
+    if RunService:IsClient() and Preset.OnFireClient then
+        task.spawn(function()
+            Preset.OnFireClient(ProjectileObject)
+        end)
+    end
+    if not RunService:IsClient() and Preset.OnFireServer then
+        task.spawn(function()
+            Preset.OnFireServer(ProjectileObject)
+        end)
+    end
 end
 
 --[[

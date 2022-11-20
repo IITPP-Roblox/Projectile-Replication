@@ -16,12 +16,15 @@ export type ProjectilePreset = {
     DefaultFireSound: string?,
     DefaultReloadSound: string?,
     Appearance: ProjectileAppearance?,
+    OnFireClient: (Projectile) -> ()?,
+    OnFireServer: (Projectile) -> ()?,
     OnHitClient: (BasePart, Vector3, Projectile) -> ()?,
     OnHitServer: (BasePart, Vector3, Projectile) -> ()?,
 }
 
 export type Projectile = {
     OnHit: RBXScriptSignal,
+    Source: Instance?,
     RayCast: (Vector3, Vector3, {Instance}?) -> (BasePart?, Vector3),
     new: (ProjectileAppearance) -> Projectile,
     Fire: (Projectile, CFrame, number, number, {Instance}?) -> (),
