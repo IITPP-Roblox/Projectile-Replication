@@ -31,7 +31,7 @@ local CurrentTween = nil
 --[[
 Starts charging up the weapon.
 --]]
-local function ChargeUp(): nil
+local function ChargeUp(): ()
     --Calculate the times.
     local ChargeElapsedTime = ChargedPercentValue.Value * Configuration.ChargeUpTime
     local ChargeRemainingTime = Configuration.ChargeUpTime - ChargeElapsedTime
@@ -53,7 +53,7 @@ end
 --[[
 Starts charging down the weapon.
 --]]
-local function ChargeDown(): nil
+local function ChargeDown(): ()
     --Calculate the times.
     local ChargeRemainingTime = ChargedPercentValue.Value * Configuration.ChargeDownTime
     local ChargeElapsedTime = Configuration.ChargeDownTime - ChargeRemainingTime

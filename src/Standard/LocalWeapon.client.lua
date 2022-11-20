@@ -57,7 +57,7 @@ end
 --[[
 Fires the weapon.
 --]]
-local function Fire(): nil
+local function Fire(): ()
     if not Equipped or not CurrentMouse then return end
     for _ = 1, Configuration.ProjectilesPerRound or 1 do
         ProjectileReplication:Fire(CFrame.new(StartAttachment.WorldPosition, GetMousePosition()) * CFrame.Angles(0, 0, math.random() * math.pi * 2) * CFrame.Angles(math.random() * Configuration.ProjectileSpread, 0, 0), Handle, Configuration.ProjectilePreset)
@@ -67,7 +67,7 @@ end
 --[[
 Tries to reload the weapon.
 --]]
-local function TryReload(): nil
+local function TryReload(): ()
     if ReloadingValue.Value then return end
     ReloadingValue.Value = true
     ProjectileReplication:Reload(Players.LocalPlayer, Tool)
@@ -76,7 +76,7 @@ end
 --[[
 Tries to fire the weapon.
 --]]
-local function TryFire(): nil
+local function TryFire(): ()
     --Return if there are no rounds or the last fire was too recent.
     if ReloadingValue.Value then return end
     if RemainingRounds.Value <= 0 then TryReload() return end

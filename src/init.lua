@@ -47,7 +47,7 @@ end
 --[[
 Fires a projectile.
 --]]
-function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?): nil
+function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?): ()
     --Set the source.
     if RunService:IsClient() and not Source then
         Source = Players.LocalPlayer.Character
@@ -116,7 +116,7 @@ end
 --[[
 Reloads the current tool of the given player.
 --]]
-function ProjectileReplication:Reload(Player: Player?, Tool: Tool?): nil
+function ProjectileReplication:Reload(Player: Player?, Tool: Tool?): ()
     if RunService:IsClient() then
         ReloadEvent:FireServer(Tool)
     else
@@ -155,7 +155,7 @@ end
 --[[
 Sets the aim of a player to a given CFrame.
 --]]
-function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): nil
+function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
     --Get or create the update function.
     local Character = Player.Character
     if not Character then return end
@@ -319,7 +319,7 @@ end
 --[[
 Sets up the replication.
 --]]
-function ProjectileReplication:SetUp(): nil
+function ProjectileReplication:SetUp(): ()
     --Return if setup was called.
     if self.SetUpCalled then return end
     self.SetUpCalled = true

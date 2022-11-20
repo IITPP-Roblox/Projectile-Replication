@@ -64,7 +64,7 @@ to the game will make Nexus VR Character Model load when the game starts.
 # Firing Projectiles Directly
 In the case a projectile needs to be fired without using a standard
 weapon, such as the turrets in the Innovation Inc Thermal Power Plant, use
-`ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, PresetName: string): nil`.
+`ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, PresetName: string): ()`.
 The `StartCFrame` is the starting `CFrame` of the projectile with `FirePart`
 being the source part. If `FirePart` has an `Attachment` named `StartAttachment`,
 the attachment will be used for playing sounds. `PresetName` is the name of

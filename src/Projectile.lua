@@ -81,7 +81,7 @@ end
 --[[
 Fires the projectile.
 --]]
-function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number, IgnoreList: {Instance}?): nil
+function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number, IgnoreList: {Instance}?): ()
     IgnoreList = IgnoreList or {}
     table.insert(IgnoreList, Workspace.CurrentCamera)
 
@@ -150,7 +150,7 @@ end
 --[[
 Destroys the Projectile.
 --]]
-function Projectile:Destroy(): nil
+function Projectile:Destroy(): ()
     for _, Object in pairs(self.ObjectsToDestroy) do
         Object:Destroy()
     end

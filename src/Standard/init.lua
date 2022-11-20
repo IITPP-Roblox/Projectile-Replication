@@ -14,7 +14,7 @@ local Standard = {}
 --[[
 Prepares a standard weapon.
 --]]
-function Standard.CreateStandardWeapon(WeaponModel: Tool): nil
+function Standard.CreateStandardWeapon(WeaponModel: Tool): ()
     --Ignore the tool if it is not valid.
     if not WeaponModel:IsA("Tool") then return end
     local Configuration = WeaponModel:FindFirstChild("Configuration")
