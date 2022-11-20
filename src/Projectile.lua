@@ -99,6 +99,7 @@ function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number
             end
         end
         ProjectilePart.Parent = Workspace.CurrentCamera
+        self.ProjectilePart = ProjectilePart
         table.insert(self.ObjectsToDestroy, ProjectilePart)
         table.insert(IgnoreList, ProjectilePart)
     end
