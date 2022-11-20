@@ -138,7 +138,10 @@ function ProjectileReplication:Reload(Player: Player?, Tool: Tool?): nil
         local StartAttachment = Handle:FindFirstChild("StartAttachment")
         if StartAttachment and Tool.Parent == Character then
             local PresetModule = Presets:FindFirstChild(Configuration.ProjectilePreset)
-            LocalAudio:PlayAudio(Configuration and Configuration.ReloadSound or require(PresetModule).DefaultReloadSound, StartAttachment)
+            local ReloadSound = Configuration and Configuration.ReloadSound or require(PresetModule).DefaultReloadSound
+            if ReloadSound then
+                LocalAudio:PlayAudio(ReloadSound, StartAttachment)
+            end
         end
 
         --Reload the weapon.
