@@ -60,6 +60,7 @@ function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, Pre
 
     --Create the projectile.
     local ProjectileObject = Projectile.new(RunService:IsClient() and Preset.Appearance or nil)
+    ProjectileObject.Source = Source
     if RunService:IsClient() and Preset.OnHitClient then
         ProjectileObject.OnHit:Connect(Preset.OnHitClient)
     end
