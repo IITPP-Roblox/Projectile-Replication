@@ -3,6 +3,7 @@ TheNexusAvenger
 
 Handles the weapon on the server.
 --]]
+--!strict
 
 local TweenService = game:GetService("TweenService")
 
@@ -13,11 +14,14 @@ local ChargeAttachment = Handle:WaitForChild("ChargeAttachment")
 local ChargeDownSound = ChargeAttachment:WaitForChild("ChargeDown")
 local ChargeUpSound = ChargeAttachment:WaitForChild("ChargeUp")
 local ChargeLoopSound = ChargeAttachment:WaitForChild("ChargeLoop")
-local Configuration = require(Tool:WaitForChild("Configuration"))
+local Configuration = require(Tool:WaitForChild("Configuration")) :: any
 
 local ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value
-while not ProjectileReplicationModule do ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value task.wait() end
-local LocalTween = require(ProjectileReplicationModule:WaitForChild("LocalTween"))
+while not ProjectileReplicationModule do
+    ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value
+    task.wait()
+end
+local LocalTween = require(ProjectileReplicationModule:WaitForChild("LocalTween")) :: any
 
 local State = Tool:WaitForChild("State")
 local ChargedPercentValue = State:WaitForChild("ChargedPercent")

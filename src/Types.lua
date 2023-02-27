@@ -3,6 +3,7 @@ TheNexusAvenger
 
 Types used by the system.
 --]]
+--!strict
 
 export type ProjectileAppearance = {
     LengthStuds: number?,

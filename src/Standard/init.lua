@@ -3,9 +3,11 @@ TheNexusAvenger
 
 Prepares standard weapons.
 --]]
+--!strict
 
 local LocalWeaponScript = script:WaitForChild("LocalWeapon")
 local ServerWeaponScript = script:WaitForChild("ServerWeapon")
+local Types = require(script.Parent:WaitForChild("Types"))
 
 local Standard = {}
 
@@ -19,7 +21,7 @@ function Standard.CreateStandardWeapon(WeaponModel: Tool): ()
     if not WeaponModel:IsA("Tool") then return end
     local Configuration = WeaponModel:FindFirstChild("Configuration")
     if not Configuration or not Configuration:IsA("ModuleScript") then return end
-    Configuration = require(Configuration)
+    local ConfigurationData = require(Configuration) :: Types.StandardConfiguration
 
     --Add the state folder.
     local StateFolder = Instance.new("Folder")
@@ -28,12 +30,12 @@ function Standard.CreateStandardWeapon(WeaponModel: Tool): ()
 
     local LastFireTimeValue = Instance.new("NumberValue")
     LastFireTimeValue.Name = "LastFireTime"
-    LastFireTimeValue.Value = StateFolder
+    LastFireTimeValue.Value = 0
     LastFireTimeValue.Parent = StateFolder
 
     local RemainingRoundsValue = Instance.new("IntValue")
     RemainingRoundsValue.Name = "RemainingRounds"
-    RemainingRoundsValue.Value = Configuration.TotalRounds
+    RemainingRoundsValue.Value = ConfigurationData.TotalRounds
     RemainingRoundsValue.Parent = StateFolder
 
     local ReloadingValue = Instance.new("BoolValue")
@@ -51,10 +53,10 @@ function Standard.CreateStandardWeapon(WeaponModel: Tool): ()
     NewLocalWeaponScript.Disabled = false
     NewLocalWeaponScript.Parent = WeaponModel
 
-    if Configuration.ChargeUpTime and Configuration.ChargeDownTime then
+    if ConfigurationData.ChargeUpTime and ConfigurationData.ChargeDownTime then
         local ChargedPercentValue = Instance.new("NumberValue")
         ChargedPercentValue.Name = "ChargedPercent"
-        ChargedPercentValue.Value = StateFolder
+        ChargedPercentValue.Value = 0
         ChargedPercentValue.Parent = StateFolder
 
         local NewServerWeaponScript = ServerWeaponScript:Clone()

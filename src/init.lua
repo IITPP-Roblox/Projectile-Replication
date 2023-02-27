@@ -3,6 +3,7 @@ TheNexusAvenger
 
 Handles replication of projectiles.
 --]]
+--!strict
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,6 +13,7 @@ local Projectile = require(script:WaitForChild("Projectile"))
 local JointSolver = require(script:WaitForChild("JointSolver"))
 local LocalAudio = require(script:WaitForChild("LocalAudio"))
 local LocalTween = require(script:WaitForChild("LocalTween"))
+local Types = require(script:WaitForChild("Types"))
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
 
 local ProjectileReplication = {}
@@ -21,9 +23,9 @@ setmetatable(UpdateAimFunctions, {__mode="k"})
 
 
 --Create or get the RemoteEvent.
-local FireProjectileEvent: RemoteEvent? = nil
-local ReloadEvent: RemoteEvent? = nil
-local UpdateAimEvent: RemoteEvent? = nil
+local FireProjectileEvent: RemoteEvent = nil
+local ReloadEvent: RemoteEvent = nil
+local UpdateAimEvent: RemoteEvent = nil
 if RunService:IsClient() then
     FireProjectileEvent = script:WaitForChild("FireProjectile")
     ReloadEvent = script:WaitForChild("Reload")
@@ -56,7 +58,7 @@ function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, Pre
     --Get the preset.
     local PresetModule = Presets:FindFirstChild(PresetName)
     if not PresetModule then return end
-    local Preset = require(PresetModule)
+    local Preset = require(PresetModule) :: Types.ProjectilePreset
 
     --Create the projectile.
     local ProjectileObject = Projectile.new(RunService:IsClient() and Preset.Appearance or nil)
@@ -64,14 +66,14 @@ function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, Pre
     if RunService:IsClient() and Preset.OnHitClient then
         ProjectileObject.OnHit:Connect(Preset.OnHitClient)
     end
-    if not RunService:IsClient() and Preset.OnServerHit then
-        ProjectileObject.OnHit:Connect(Preset.OnServerHit)
+    if not RunService:IsClient() and Preset.OnHitServer then
+        ProjectileObject.OnHit:Connect(Preset.OnHitServer)
     end
     local Configuration = nil
     if Source then
         local Tool = Source:FindFirstChildOfClass("Tool")
-        Configuration = (Tool and Tool:FindFirstChild("Configuration") and require(Tool:FindFirstChild("Configuration")))
-        ProjectileObject.Configuration = Configuration
+        Configuration = (Tool and Tool:FindFirstChild("Configuration") and require(Tool:FindFirstChild("Configuration")) :: any);
+        (ProjectileObject :: any).Configuration = Configuration
     end
 
     --Show the fire animation.
@@ -88,7 +90,7 @@ function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, Pre
             FireProjectileEvent:FireServer(StartCFrame)
         else
             local FiringPlayer = Players:GetPlayerFromCharacter(Source)
-            for _, Player in pairs(Players:GetPlayers()) do
+            for _, Player in Players:GetPlayers() do
                 if FiringPlayer ~= Player then
                     FireProjectileEvent:FireClient(Player, StartCFrame, Source, FirePart, PresetName)
                 end
@@ -119,26 +121,26 @@ Reloads the current tool of the given player.
 function ProjectileReplication:Reload(Player: Player?, Tool: Tool?): ()
     if RunService:IsClient() then
         ReloadEvent:FireServer(Tool)
-    else
+    elseif Player then
         --Get the tool parts.
-        local Character = Player.Character
+        local Character = Player.Character :: Model
         if not Character then return end
-        Tool = Character:FindFirstChildOfClass("Tool") or Tool
-        if not Tool then return end
-        local State = Tool:FindFirstChild("State")
-        local Configuration = Tool:FindFirstChild("Configuration")
-        local Handle = Tool:FindFirstChild("Handle")
+        local NewTool = Character:FindFirstChildOfClass("Tool") or Tool :: Tool
+        if not NewTool then return end
+        local State = NewTool:FindFirstChild("State") :: Folder
+        local Configuration = NewTool:FindFirstChild("Configuration") :: ModuleScript
+        local Handle = NewTool:FindFirstChild("Handle") :: BasePart
         if not State or not Configuration or not Handle then return end
-        Configuration = require(Configuration)
-        local RemainingRoundsValue = State:FindFirstChild("RemainingRounds")
-        local ReloadingValue = State:FindFirstChild("Reloading")
+        local ConfigurationData = require(Configuration) :: Types.StandardConfiguration
+        local RemainingRoundsValue = State:FindFirstChild("RemainingRounds") :: IntValue
+        local ReloadingValue = State:FindFirstChild("Reloading") :: BoolValue
         if not RemainingRoundsValue or not ReloadingValue then return end
 
         --Play the reload sound.
         local StartAttachment = Handle:FindFirstChild("StartAttachment")
-        if StartAttachment and Tool.Parent == Character then
-            local PresetModule = Presets:FindFirstChild(Configuration.ProjectilePreset)
-            local ReloadSound = Configuration and Configuration.ReloadSound or require(PresetModule).DefaultReloadSound
+        if StartAttachment and NewTool.Parent == Character then
+            local PresetModule = Presets:FindFirstChild(ConfigurationData.ProjectilePreset)
+            local ReloadSound = Configuration and ConfigurationData.ReloadSound or (require(PresetModule) :: Types.ProjectilePreset).DefaultReloadSound
             if ReloadSound then
                 LocalAudio:PlayAudio(ReloadSound, StartAttachment)
             end
@@ -146,8 +148,8 @@ function ProjectileReplication:Reload(Player: Player?, Tool: Tool?): ()
 
         --Reload the weapon.
         ReloadingValue.Value = true
-        task.wait(Configuration.ReloadTime)
-        RemainingRoundsValue.Value = Configuration.TotalRounds
+        task.wait(ConfigurationData.ReloadTime)
+        RemainingRoundsValue.Value = ConfigurationData.TotalRounds
         ReloadingValue.Value = false
     end
 end
@@ -157,28 +159,27 @@ Sets the aim of a player to a given CFrame.
 --]]
 function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
     --Get or create the update function.
-    local Character = Player.Character
+    local Character = Player.Character :: Model
     if not Character then return end
     if not UpdateAimFunctions[Character] then
         --Get the character and tool parts.
-        local Tool = Character:FindFirstChildOfClass("Tool")
-        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-        local Head = Character:FindFirstChild("Head")
-        local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
-        local LowerTorso = Character:FindFirstChild("LowerTorso")
-        local UpperTorso = Character:FindFirstChild("UpperTorso")
-        local LeftUpperArm = Character:FindFirstChild("LeftUpperArm")
-        local RightUpperArm = Character:FindFirstChild("RightUpperArm")
+        local Tool = Character:FindFirstChildOfClass("Tool") :: Tool
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+        local Head = Character:FindFirstChild("Head") :: BasePart
+        local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart") :: BasePart
+        local LowerTorso = Character:FindFirstChild("LowerTorso") :: BasePart
+        local UpperTorso = Character:FindFirstChild("UpperTorso") :: BasePart
+        local LeftUpperArm = Character:FindFirstChild("LeftUpperArm") :: BasePart
+        local RightUpperArm = Character:FindFirstChild("RightUpperArm") :: BasePart
         if not Tool or not Humanoid or not Head or not LowerTorso or not UpperTorso or not RightUpperArm or not HumanoidRootPart then return end
-        local Handle = Tool:FindFirstChild("Handle")
-        local RootRigAttachment = HumanoidRootPart:FindFirstChild("RootRigAttachment")
-        local Root = LowerTorso:FindFirstChild("Root")
-        local RightShoulderRigAttachment = UpperTorso:FindFirstChild("RightShoulderRigAttachment")
-        local LeftShoulderRigAttachment = UpperTorso:FindFirstChild("LeftShoulderRigAttachment")
-        local LeftShoulder = LeftUpperArm and LeftUpperArm:FindFirstChild("LeftShoulder")
-        local RightShoulder = RightUpperArm:FindFirstChild("RightShoulder")
+        local Handle = Tool:FindFirstChild("Handle") :: BasePart
+        local RootRigAttachment = HumanoidRootPart:FindFirstChild("RootRigAttachment") :: Attachment
+        local Root = LowerTorso:FindFirstChild("Root") :: Motor6D
+        local RightShoulderRigAttachment = UpperTorso:FindFirstChild("RightShoulderRigAttachment") :: Attachment
+        local LeftShoulderRigAttachment = UpperTorso:FindFirstChild("LeftShoulderRigAttachment") :: Attachment
+        local RightShoulder = RightUpperArm:FindFirstChild("RightShoulder") :: Motor6D
         if not Handle or not RootRigAttachment or not Root or not RightShoulderRigAttachment or not LeftShoulderRigAttachment or not RightShoulder then return end
-        local LeftHandHold = Handle:FindFirstChild("LeftHandHold")
+        local LeftHandHold = Handle:FindFirstChild("LeftHandHold") :: Attachment
 
         --Get the left arm parts.
         local LeftUpperLimbStartAttachment, LeftUpperLimbJointAttachment = nil, nil
@@ -187,17 +188,20 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
         if LeftHandHold then
             local LeftLowerArm = Character:FindFirstChild("LeftLowerArm")
             local LeftHand = Character:FindFirstChild("LeftHand")
-            LeftUpperLimbStartAttachment = LeftUpperArm and LeftUpperArm:FindFirstChild("LeftShoulderRigAttachment")
-            LeftUpperLimbJointAttachment = LeftUpperArm and LeftUpperArm:FindFirstChild("LeftElbowRigAttachment")
-            LeftLowerLimbJointAttachment = LeftLowerArm and LeftLowerArm:FindFirstChild("LeftElbowRigAttachment")
-            LeftLowerLimbEndAttachment = LeftLowerArm and LeftLowerArm:FindFirstChild("LeftWristRigAttachment")
-            LeftLimbEndAttachment = LeftHand and LeftHand:FindFirstChild("LeftWristRigAttachment")
-            LeftLimbHoldAttachment = LeftHand and LeftHand:FindFirstChild("LeftGripAttachment")
+            LeftUpperLimbStartAttachment = LeftUpperArm and LeftUpperArm:FindFirstChild("LeftShoulderRigAttachment") :: Attachment
+            LeftUpperLimbJointAttachment = LeftUpperArm and LeftUpperArm:FindFirstChild("LeftElbowRigAttachment") :: Attachment
+            LeftLowerLimbJointAttachment = LeftLowerArm and LeftLowerArm:FindFirstChild("LeftElbowRigAttachment") :: Attachment
+            LeftLowerLimbEndAttachment = LeftLowerArm and LeftLowerArm:FindFirstChild("LeftWristRigAttachment") :: Attachment
+            LeftLimbEndAttachment = LeftHand and LeftHand:FindFirstChild("LeftWristRigAttachment") :: Attachment
+            LeftLimbHoldAttachment = LeftHand and LeftHand:FindFirstChild("LeftGripAttachment") :: Attachment
         end
 
         --Get the configuration.
-        local ToolConfiguration = Tool:FindFirstChild("Configuration")
-        if ToolConfiguration then ToolConfiguration = require(ToolConfiguration) end
+        local ToolConfigurationModule = Tool:FindFirstChild("Configuration")
+        local ToolConfiguration = nil
+        if ToolConfigurationModule then
+            ToolConfiguration = require(ToolConfigurationModule) :: Types.StandardConfiguration
+        end
         local CharacterRotation = ToolConfiguration.AimRotationOffset or CFrame.new()
 
         --Create the BodyGyro if the player is the local player.
@@ -218,7 +222,6 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
         Root.C0 = RootRigAttachment.CFrame * CharacterRotation
 
         --Store the update function.
-        local AimPosition = nil
         UpdateAimFunctions[Character] = function(NewAimPosition: Vector3)
             if BodyGyro then
                 BodyGyro.CFrame = CFrame.new(Head.Position, NewAimPosition)
@@ -232,8 +235,8 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
         local function UpdateJoint(PartName: string, PartJoints: {[string]: CFrame})
             local Part = Character:FindFirstChild(PartName)
             if Part then
-                for JointName, TransformCFrame in pairs(PartJoints) do
-                    local Joint = Part:FindFirstChild(JointName)
+                for JointName, TransformCFrame in PartJoints do
+                    local Joint = Part:FindFirstChild(JointName) :: Motor6D
                     if Joint then
                         Joint.Transform = TransformCFrame
                     end
@@ -270,7 +273,7 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
 
                 --Set the joints.
                 if ToolConfiguration.AnimationJoints then
-                    for PartName, PartJoints in pairs(ToolConfiguration.AnimationJoints) do
+                    for PartName, PartJoints in ToolConfiguration.AnimationJoints do
                         UpdateJoint(PartName, PartJoints)
                     end
                 end
@@ -286,7 +289,7 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
         ToolChangedEvent = Tool.AncestryChanged:Connect(function()
             --Disconnect the events and remove the changed callback.
             ToolChangedEvent:Disconnect()
-            ToolChangedEvent = nil
+            ToolChangedEvent = nil :: any
             UpdateAnimationsEvent:Disconnect()
             UpdateAnimationsEvent = nil
             if UpdateAimFunctions[Character] == CurrentUpdateFunction then
@@ -341,19 +344,19 @@ function ProjectileReplication:SetUp(): ()
         --Connect requests for projectiles being fired.
         FireProjectileEvent.OnServerEvent:Connect(function(Player: Player, StartCFrame: CFrame)
             --Get the weapon that was fired.
-            local Character = Player.Character
+            local Character = Player.Character :: Model
             if not Character then return end
-            local Humnanoid = Character:FindFirstChildOfClass("Humanoid")
-            local Tool = Character:FindFirstChildOfClass("Tool")
+            local Humnanoid = Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+            local Tool = Character:FindFirstChildOfClass("Tool") :: Tool
             if not Humnanoid or Humnanoid.Health <= 0 or not Tool then return end
-            local Handle = Tool:FindFirstChild("Handle")
-            local State = Tool:FindFirstChild("State")
-            local Configuration = Tool:FindFirstChild("Configuration")
+            local Handle = Tool:FindFirstChild("Handle") :: BasePart
+            local State = Tool:FindFirstChild("State") :: Folder
+            local Configuration = Tool:FindFirstChild("Configuration") :: Model
             if not Handle or not State or not Configuration then return end
-            Configuration = require(Configuration)
-            local RemainingRoundsValue = State:FindFirstChild("RemainingRounds")
-            local ReloadingValue = State:FindFirstChild("Reloading")
-            local LastFireTimeValue = State:FindFirstChild("LastFireTime")
+            local ConfigurationData = require(Configuration) :: Types.StandardConfiguration
+            local RemainingRoundsValue = State:FindFirstChild("RemainingRounds") :: IntValue
+            local ReloadingValue = State:FindFirstChild("Reloading") :: BoolValue
+            local LastFireTimeValue = State:FindFirstChild("LastFireTime") :: NumberValue
             if not RemainingRoundsValue or not ReloadingValue then return end
 
             --Return if the firing is invalid.
@@ -361,12 +364,12 @@ function ProjectileReplication:SetUp(): ()
             if RemainingRoundsValue.Value <= 0 then return end
             if (StartCFrame.Position - Handle.Position).Magnitude > 10 and not Humnanoid.Sit and not Humnanoid.SeatPart then return end --Local trams do not replicate to the server, so the projectiles shots will claim to be far away.
             --TODO: Security check below does not apply to shotgun. This is exploitable.
-            if tick() - LastFireTimeValue.Value < Configuration.CooldownTime * 0.5 and (not Configuration.ProjectilesPerRound or Configuration.ProjectilesPerRound == 1) then return end
+            if tick() - LastFireTimeValue.Value < ConfigurationData.CooldownTime * 0.5 and (not ConfigurationData.ProjectilesPerRound or ConfigurationData.ProjectilesPerRound == 1) then return end
 
             --Fire the projectile.
             LastFireTimeValue.Value = tick()
             RemainingRoundsValue.Value = RemainingRoundsValue.Value - 1
-            self:Fire(StartCFrame, Handle, Configuration.ProjectilePreset, Character)
+            (self :: any):Fire(StartCFrame, Handle, ConfigurationData.ProjectilePreset, Character)
         end)
 
         --Connect requests for reloading.
@@ -377,10 +380,10 @@ function ProjectileReplication:SetUp(): ()
         --Connect requests for updating the aim of players.
         UpdateAimEvent.OnServerEvent:Connect(function(Player: Player, AimPosition: Vector3)
             --Determine if the player can aim.
-            local Character = Player.Character
+            local Character = Player.Character :: Model
             if not Character then return end
-            local Humnanoid = Character:FindFirstChildOfClass("Humanoid")
-            local Tool = Character:FindFirstChildOfClass("Tool")
+            local Humnanoid = Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+            local Tool = Character:FindFirstChildOfClass("Tool") :: Tool
             if not Humnanoid or Humnanoid.Health <= 0 or not Tool then return end
 
             --Send the aim requests.

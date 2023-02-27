@@ -3,6 +3,7 @@ TheNexusAvenger
 
 Runs the weapon on the client.
 --]]
+--!strict
 
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
@@ -11,14 +12,17 @@ local UserInputService = game:GetService("UserInputService")
 
 local Tool = script.Parent
 local ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value
-while not ProjectileReplicationModule do ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value task.wait() end
-local Projectile = require(ProjectileReplicationModule:WaitForChild("Projectile"))
-local ProjectileReplication = require(ProjectileReplicationModule)
+while not ProjectileReplicationModule do
+    ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value
+    task.wait()
+end
+local Projectile = require(ProjectileReplicationModule:WaitForChild("Projectile")) :: any
+local ProjectileReplication = require(ProjectileReplicationModule) :: any
 
 local Camera = Workspace.CurrentCamera
 local Handle = Tool:WaitForChild("Handle")
 local StartAttachment = Handle:WaitForChild("StartAttachment")
-local Configuration = require(Tool:WaitForChild("Configuration"))
+local Configuration = require(Tool:WaitForChild("Configuration")) :: any
 
 local State = Tool:WaitForChild("State")
 local ChargedPercentValue = State:FindFirstChild("ChargedPercent")
@@ -47,11 +51,12 @@ logic used by the projectiles.
 local function GetMousePosition(): Vector3
     if UserInputService.VREnabled then
         return (StartAttachment.WorldCFrame * CFrame.new(0, 0, -10000)).Position
-    else
+    elseif CurrentMouse then
         local CameraRay = Camera:ScreenPointToRay(CurrentMouse.X, CurrentMouse.Y, 10000)
         local _, EndPosition = Projectile.RayCast(Camera.CFrame.Position, CameraRay.Origin + CameraRay.Direction, {Players.LocalPlayer.Character, Camera})
         return EndPosition
     end
+    return Vector3.zero
 end
 
 --[[
@@ -79,7 +84,10 @@ Tries to fire the weapon.
 local function TryFire(): ()
     --Return if there are no rounds or the last fire was too recent.
     if ReloadingValue.Value then return end
-    if RemainingRounds.Value <= 0 then TryReload() return end
+    if RemainingRounds.Value <= 0 then
+        TryReload()
+        return
+    end
     if tick() - LastFireTime < Configuration.CooldownTime then return end
 
     --Fire the weapon.
@@ -100,11 +108,12 @@ Tool.Equipped:Connect(function(Mouse: Mouse)
     local CrosshairGui, CrossFrame, AmmoText, ReloadingText = nil, nil, nil, nil
     if UserInputService.VREnabled then
         --Create the ammo display.
-        CurrentVRAmmoGui = Instance.new("BillboardGui")
-        CurrentVRAmmoGui.StudsOffsetWorldSpace = Vector3.new(-1.2, 0, 0)
-        CurrentVRAmmoGui.Size = UDim2.new(3, 0, 0.75, 0)
-        CurrentVRAmmoGui.Adornee = StartAttachment
-        CurrentVRAmmoGui.Parent = StartAttachment
+        local NewVRAmmoGui = Instance.new("BillboardGui")
+        NewVRAmmoGui.StudsOffsetWorldSpace = Vector3.new(-1.2, 0, 0)
+        NewVRAmmoGui.Size = UDim2.new(3, 0, 0.75, 0)
+        NewVRAmmoGui.Adornee = StartAttachment
+        NewVRAmmoGui.Parent = StartAttachment
+        CurrentVRAmmoGui = NewVRAmmoGui
 
         AmmoText = Instance.new("TextLabel")
         AmmoText.BackgroundTransparency = 1
@@ -117,7 +126,7 @@ Tool.Equipped:Connect(function(Mouse: Mouse)
         AmmoText.TextScaled = true
         AmmoText.TextXAlignment = Enum.TextXAlignment.Center
         AmmoText.Text = GetDisplayProjectiles(RemainingRounds.Value).." / "..GetDisplayProjectiles(Configuration.TotalRounds)
-        AmmoText.Parent = CurrentVRAmmoGui
+        AmmoText.Parent = NewVRAmmoGui
 
         ReloadingText = Instance.new("TextLabel")
         ReloadingText.BackgroundTransparency = 1
@@ -131,7 +140,7 @@ Tool.Equipped:Connect(function(Mouse: Mouse)
         ReloadingText.TextScaled = true
         ReloadingText.TextXAlignment = Enum.TextXAlignment.Center
         ReloadingText.Text = "Reloading"
-        ReloadingText.Parent = CurrentVRAmmoGui
+        ReloadingText.Parent = NewVRAmmoGui
     else
         --Create the crosshair.
         UserInputService.MouseIconEnabled = false
