@@ -9,7 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local StarterPack = game:GetService("StarterPack")
 
-local ProjectileReplication = require(ReplicatedStorage:WaitForChild("ProjectileReplication"))
+local ProjectileReplication = require(ReplicatedStorage:WaitForChild("ProjectileReplication")) :: any
 ProjectileReplication:SetUp()
 
 

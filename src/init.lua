@@ -14,6 +14,7 @@ local JointSolver = require(script:WaitForChild("JointSolver"))
 local LocalAudio = require(script:WaitForChild("LocalAudio"))
 local LocalTween = require(script:WaitForChild("LocalTween"))
 local Types = require(script:WaitForChild("Types"))
+local LocalWeaponSetup = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"))
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
 
 local ProjectileReplication = {}
@@ -330,6 +331,7 @@ function ProjectileReplication:SetUp(): ()
     if RunService:IsClient() then
         LocalAudio:SetUp()
         LocalTween:SetUp()
+        LocalWeaponSetup:Bind()
 
         --Connect projectiles being fired.
         FireProjectileEvent.OnClientEvent:Connect(function(StartCFrame: CFrame, Source: Model, FirePart: BasePart, PresetName: string)
