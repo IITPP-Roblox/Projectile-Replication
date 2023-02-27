@@ -3,6 +3,7 @@ TheNexusAvenger
 
 Controls the logic for projectiles.
 --]]
+--!strict
 
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
@@ -19,19 +20,18 @@ Static helper for casting rays.
 --]]
 function Projectile.RayCast(StartPosition: Vector3, EndPosition: Vector3, IgnoreList: {Instance}?): (BasePart?, Vector3)
     --Clone the ignore list.
+    local NewIgnoreList = {}
     if IgnoreList ~= nil then
-        local NewIgnoreList = {}
-        for _, Ins in pairs(IgnoreList) do
+        for _, Ins in IgnoreList do
             table.insert(NewIgnoreList, Ins)
         end
-        NewIgnoreList = IgnoreList
     end
 
     --Cast rays until a valid part is reached.
     local RaycastResult = nil
     local RaycastParameters = RaycastParams.new()
-    RaycastParameters.FilterType = Enum.RaycastFilterType.Blacklist
-    RaycastParameters.FilterDescendantsInstances = IgnoreList
+    RaycastParameters.FilterType = Enum.RaycastFilterType.Exclude
+    RaycastParameters.FilterDescendantsInstances = NewIgnoreList
     RaycastParameters.IgnoreWater = true
     repeat
         --Perform the raycast.
@@ -50,8 +50,8 @@ function Projectile.RayCast(StartPosition: Vector3, EndPosition: Vector3, Ignore
         end
 
         --Add the hit to the ignore list and allow it to retry.
-        table.insert(IgnoreList, HitPart)
-        RaycastParameters.FilterDescendantsInstances = IgnoreList
+        table.insert(NewIgnoreList, HitPart)
+        RaycastParameters.FilterDescendantsInstances = NewIgnoreList
     until RaycastResult == nil
 
     --Return the end position and no part.
@@ -61,7 +61,7 @@ end
 --[[
 Creates a projectile.
 --]]
-function Projectile.new(Appearance: ProjctileTypes.ProjectileAppearance): ProjctileTypes.Projectile
+function Projectile.new(Appearance: ProjctileTypes.ProjectileAppearance?): ProjctileTypes.Projectile
     --Create the object.
     local ProjectileObject = {
         Appearance = Appearance,
@@ -75,15 +75,15 @@ function Projectile.new(Appearance: ProjctileTypes.ProjectileAppearance): Projct
     table.insert(ProjectileObject.ObjectsToDestroy, ProjectileObject.OnHitEvent)
 
     --Return the event.
-    return ProjectileObject
+    return (ProjectileObject :: any) :: ProjctileTypes.Projectile
 end
 
 --[[
 Fires the projectile.
 --]]
 function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number, IgnoreList: {Instance}?): ()
-    IgnoreList = IgnoreList or {}
-    table.insert(IgnoreList, Workspace.CurrentCamera)
+    local NewIgnoreList = IgnoreList or {}
+    table.insert(NewIgnoreList, Workspace.CurrentCamera)
 
     --Create the projectile part.
     local ProjectilePart = nil
@@ -94,14 +94,14 @@ function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number
         ProjectilePart.Anchored = true
         ProjectilePart.Shape = Enum.PartType.Cylinder
         if self.Appearance.Properties then
-            for Name, Value in pairs(self.Appearance.Properties) do
-                ProjectilePart[Name] = Value
+            for Name, Value in self.Appearance.Properties do
+                (ProjectilePart :: any)[Name] = Value
             end
         end
         ProjectilePart.Parent = Workspace.CurrentCamera
         self.ProjectilePart = ProjectilePart
         table.insert(self.ObjectsToDestroy, ProjectilePart)
-        table.insert(IgnoreList, ProjectilePart)
+        table.insert(NewIgnoreList, ProjectilePart)
     end
 
     --Start the projectile math.
@@ -151,7 +151,7 @@ end
 Destroys the Projectile.
 --]]
 function Projectile:Destroy(): ()
-    for _, Object in pairs(self.ObjectsToDestroy) do
+    for _, Object in self.ObjectsToDestroy do
         Object:Destroy()
     end
     self.ObjectsToDestroy = {}
