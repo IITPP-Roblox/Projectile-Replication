@@ -372,7 +372,7 @@ function ProjectileReplication:SetUp(): ()
 
             --Fire the projectile.
             LastFireTimeValue.Value = tick()
-            LastFireRemainingRoundsValue.Value = (IsCloseToLastFire and LastFireRemainingRoundsValue.Value - 1 or ConfigurationData.ProjectilesPerRound - 1)
+            LastFireRemainingRoundsValue.Value = (IsCloseToLastFire and LastFireRemainingRoundsValue.Value - 1 or (ConfigurationData.ProjectilesPerRound or 1) - 1)
             RemainingRoundsValue.Value = RemainingRoundsValue.Value - 1
             (self :: any):Fire(StartCFrame, Handle, ConfigurationData.ProjectilePreset, Character)
         end)
