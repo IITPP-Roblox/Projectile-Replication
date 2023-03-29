@@ -359,17 +359,19 @@ function ProjectileReplication:SetUp(): ()
             local RemainingRoundsValue = State:FindFirstChild("RemainingRounds") :: IntValue
             local ReloadingValue = State:FindFirstChild("Reloading") :: BoolValue
             local LastFireTimeValue = State:FindFirstChild("LastFireTime") :: NumberValue
+            local LastFireRemainingRoundsValue = State:FindFirstChild("LastFireRemainingRounds") :: NumberValue
             if not RemainingRoundsValue or not ReloadingValue then return end
 
             --Return if the firing is invalid.
             if ReloadingValue.Value then return end
             if RemainingRoundsValue.Value <= 0 then return end
             if (StartCFrame.Position - Handle.Position).Magnitude > 10 and not Humnanoid.Sit and not Humnanoid.SeatPart then return end --Local trams do not replicate to the server, so the projectiles shots will claim to be far away.
-            --TODO: Security check below does not apply to shotgun. This is exploitable.
-            if tick() - LastFireTimeValue.Value < ConfigurationData.CooldownTime * 0.5 and (not ConfigurationData.ProjectilesPerRound or ConfigurationData.ProjectilesPerRound == 1) then return end
+            local IsCloseToLastFire = (tick() - LastFireTimeValue.Value < ConfigurationData.CooldownTime * 0.5)
+            if IsCloseToLastFire and LastFireRemainingRoundsValue.Value <= 0 then return end
 
             --Fire the projectile.
             LastFireTimeValue.Value = tick()
+            LastFireRemainingRoundsValue.Value = (IsCloseToLastFire and LastFireRemainingRoundsValue.Value - 1 or ConfigurationData.ProjectilesPerRound - 1)
             RemainingRoundsValue.Value = RemainingRoundsValue.Value - 1
             (self :: any):Fire(StartCFrame, Handle, ConfigurationData.ProjectilePreset, Character)
         end)

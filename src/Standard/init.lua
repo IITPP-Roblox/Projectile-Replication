@@ -33,6 +33,11 @@ function Standard.CreateStandardWeapon(WeaponModel: Tool): ()
     LastFireTimeValue.Value = 0
     LastFireTimeValue.Parent = StateFolder
 
+    local LastFireRemainingRoundsValue = Instance.new("IntValue")
+    LastFireRemainingRoundsValue.Name = "LastFireRemainingRounds"
+    LastFireRemainingRoundsValue.Value = 0
+    LastFireRemainingRoundsValue.Parent = StateFolder
+
     local RemainingRoundsValue = Instance.new("IntValue")
     RemainingRoundsValue.Name = "RemainingRounds"
     RemainingRoundsValue.Value = ConfigurationData.TotalRounds
