@@ -8,6 +8,7 @@ Handles the weapon on the server.
 local TweenService = game:GetService("TweenService")
 
 local Tool = script.Parent
+if not Tool then return end
 local Handle = Tool:WaitForChild("Handle")
 local ChargeMotor = Handle:WaitForChild("ChargeMotor")
 local ChargeAttachment = Handle:WaitForChild("ChargeAttachment")
