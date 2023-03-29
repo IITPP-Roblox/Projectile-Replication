@@ -111,6 +111,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
         if UserInputService.VREnabled then
             --Create the ammo display.
             local NewVRAmmoGui = Instance.new("BillboardGui")
+            NewVRAmmoGui.Name = "WeaponCrosshair"
             NewVRAmmoGui.StudsOffsetWorldSpace = Vector3.new(-1.2, 0, 0)
             NewVRAmmoGui.Size = UDim2.new(3, 0, 0.75, 0)
             NewVRAmmoGui.Adornee = StartAttachment
@@ -118,6 +119,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CurrentVRAmmoGui = NewVRAmmoGui
 
             AmmoText = Instance.new("TextLabel")
+            AmmoText.Name = "AmmoText"
             AmmoText.BackgroundTransparency = 1
             AmmoText.Size = UDim2.new(1, 0, 0.7, 0)
             AmmoText.Position = UDim2.new(0, 0, 0, 0)
@@ -131,6 +133,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             AmmoText.Parent = NewVRAmmoGui
 
             ReloadingText = Instance.new("TextLabel")
+            ReloadingText.Name = "ReloadingText"
             ReloadingText.BackgroundTransparency = 1
             ReloadingText.Size = UDim2.new(1, 0, 0.35, 0)
             ReloadingText.Position = UDim2.new(0, 0, 0.65, 0)
@@ -151,6 +154,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CrosshairGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
             CrossFrame = Instance.new("Frame")
+            CrossFrame.Name = "Crosshair"
             CrossFrame.BackgroundTransparency = 1
             CrossFrame.AnchorPoint = Vector2.new(0.5, 0.5)
             CrossFrame.Size = UDim2.new(0.075, 0, 0.075, 0)
@@ -158,6 +162,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CrossFrame.Parent = CrosshairGui
 
             local CrosshairTop = Instance.new("Frame")
+            CrosshairTop.Name = "CrosshairTop"
             CrosshairTop.BackgroundColor3 = Color3.new(1, 1, 1)
             CrosshairTop.BorderColor3 = Color3.new(0, 0, 0)
             CrosshairTop.Size = UDim2.new(0, 2, 0.3, 0)
@@ -166,6 +171,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CrosshairTop.Parent = CrossFrame
 
             local CrosshairBottom = Instance.new("Frame")
+            CrosshairBottom.Name = "CrosshairBottom"
             CrosshairBottom.BackgroundColor3 = Color3.new(1, 1, 1)
             CrosshairBottom.BorderColor3 = Color3.new(0, 0, 0)
             CrosshairBottom.Size = UDim2.new(0, 2, 0.3, 0)
@@ -174,6 +180,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CrosshairBottom.Parent = CrossFrame
 
             local CrosshairLeft = Instance.new("Frame")
+            CrosshairLeft.Name = "CrosshairLeft"
             CrosshairLeft.BackgroundColor3 = Color3.new(1, 1, 1)
             CrosshairLeft.BorderColor3 = Color3.new(0, 0, 0)
             CrosshairLeft.Size = UDim2.new(0.3, 0, 0, 2)
@@ -182,6 +189,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CrosshairLeft.Parent = CrossFrame
 
             local CrosshairRight = Instance.new("Frame")
+            CrosshairRight.Name = "CrosshairRight"
             CrosshairRight.BackgroundColor3 = Color3.new(1, 1, 1)
             CrosshairRight.BorderColor3 = Color3.new(0, 0, 0)
             CrosshairRight.Size = UDim2.new(0.3, 0, 0, 2)
@@ -190,6 +198,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CrosshairRight.Parent = CrossFrame
 
             AmmoText = Instance.new("TextLabel")
+            AmmoText.Name = "AmmoText"
             AmmoText.BackgroundTransparency = 1
             AmmoText.Size = UDim2.new(5, 0, 0.4, 0)
             AmmoText.Position = UDim2.new(0.7, 2, 0.55, 2)
@@ -203,6 +212,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             AmmoText.Parent = CrossFrame
 
             ReloadingText = Instance.new("TextLabel")
+            ReloadingText.Name = "ReloadingText"
             ReloadingText.BackgroundTransparency = 1
             ReloadingText.Size = UDim2.new(5, 0, 0.3, 0)
             ReloadingText.Position = UDim2.new(0.8, 2, 0.9, 2)

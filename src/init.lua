@@ -209,6 +209,7 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
         local BodyGyro, HumanoidChangedEvent = nil, nil
         if Player == Players.LocalPlayer then
             BodyGyro = Instance.new("BodyGyro")
+            BodyGyro.Name = "ProjectileReplicationAimGyro"
             BodyGyro.D = 100
             BodyGyro.P = 10000
             BodyGyro.MaxTorque = Vector3.new(0, Humanoid.Sit and 0 or math.huge, 0)
