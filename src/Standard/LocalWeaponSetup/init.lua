@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local CombinedInput = require(script:WaitForChild("Input"):WaitForChild("CombinedInput"))
+local GamepadInput = require(script:WaitForChild("Input"):WaitForChild("GamepadInput"))
 local MouseInput = require(script:WaitForChild("Input"):WaitForChild("MouseInput"))
 local TouchInput = require(script:WaitForChild("Input"):WaitForChild("TouchInput"))
 
@@ -28,7 +29,8 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     local Handle = Tool:WaitForChild("Handle")
     local StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment
     local Configuration = require(Tool:WaitForChild("Configuration")) :: any
-    local Input = CombinedInput.new(MouseInput.new(), TouchInput.new())
+    local Input = CombinedInput.new(MouseInput.new(), TouchInput.new(), GamepadInput.new(Enum.KeyCode.ButtonR2))
+    Input:ConnectReloadButton(Enum.KeyCode.ButtonY)
 
     local State = Tool:WaitForChild("State")
     local ChargedPercentValue = State:FindFirstChild("ChargedPercent") :: NumberValue
