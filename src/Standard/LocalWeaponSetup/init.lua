@@ -6,10 +6,11 @@ Moved out of LocalWeapon to make it safe for destroying.
 --]]
 --!strict
 
-local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+
+local BaseInput = require(script:WaitForChild("Input"):WaitForChild("BaseInput"))
 
 local LocalWeaponSetup = {}
 
@@ -20,20 +21,18 @@ Sets up a tool.
 --]]
 function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     local ProjectileReplicationModule = script.Parent.Parent
-    local Projectile = require(ProjectileReplicationModule:WaitForChild("Projectile"))
     local ProjectileReplication = require(ProjectileReplicationModule) :: any
     
-    local Camera = Workspace.CurrentCamera
     local Handle = Tool:WaitForChild("Handle")
     local StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment
     local Configuration = require(Tool:WaitForChild("Configuration")) :: any
+    local Input = BaseInput.new()
 
     local State = Tool:WaitForChild("State")
     local ChargedPercentValue = State:FindFirstChild("ChargedPercent") :: NumberValue
     local RemainingRounds = State:WaitForChild("RemainingRounds") :: IntValue
     local ReloadingValue = State:WaitForChild("Reloading") :: BoolValue
 
-    local CurrentMouse: Mouse? = nil
     local CurrentVRAmmoGui: BillboardGui? = nil
     local LastFireTime = 0
     local Equipped = false
@@ -53,19 +52,15 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     local function GetMousePosition(): Vector3
         if UserInputService.VREnabled then
             return (StartAttachment.WorldCFrame * CFrame.new(0, 0, -10000)).Position
-        elseif CurrentMouse then
-            local CameraRay = Camera:ScreenPointToRay(CurrentMouse.X, CurrentMouse.Y, 10000)
-            local _, EndPosition = Projectile.RayCast(Camera.CFrame.Position, CameraRay.Origin + CameraRay.Direction, {Players.LocalPlayer.Character, Camera})
-            return EndPosition
         end
-        return Vector3.zero
+        return Input:GetTargetWorldSpace()
     end
 
     --[[
     Fires the weapon.
     --]]
     local function Fire(): ()
-        if not Equipped or not CurrentMouse then return end
+        if not Equipped then return end
         for _ = 1, Configuration.ProjectilesPerRound or 1 do
             ProjectileReplication:Fire(CFrame.new(StartAttachment.WorldPosition, GetMousePosition()) * CFrame.Angles(0, 0, math.random() * math.pi * 2) * CFrame.Angles(math.random() * Configuration.ProjectileSpread, 0, 0), Handle, Configuration.ProjectilePreset)
         end
@@ -101,9 +96,8 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
 
 
     --Connect equipping and unequipping the tool.
-    Tool.Equipped:Connect(function(Mouse: Mouse)
+    Tool.Equipped:Connect(function()
         Equipped = true
-        CurrentMouse = Mouse
 
         --Handle VR and non-VR players.
         --The crosshair is not supported for VR users and animating the arms is not recommended.
@@ -246,7 +240,8 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             while Equipped do
                 --Update the crosshair in a pcall. If the mouse becomes inactive, it throws an error.
                 local CrosshairUpdated, _ = pcall(function()
-                    CrossFrame.Position = UDim2.new(0, Mouse.X, 0, Mouse.Y)
+                    local TargetPosition = Input:GetTargetScreenSpace()
+                    CrossFrame.Position = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y)
                     ProjectileReplication:Aim(Players.LocalPlayer, GetMousePosition())
                 end)
                 if not CrosshairUpdated then
