@@ -10,7 +10,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local BaseInput = require(script:WaitForChild("Input"):WaitForChild("BaseInput"))
+local MouseInput = require(script:WaitForChild("Input"):WaitForChild("MouseInput"))
 
 local LocalWeaponSetup = {}
 
@@ -26,7 +26,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     local Handle = Tool:WaitForChild("Handle")
     local StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment
     local Configuration = require(Tool:WaitForChild("Configuration")) :: any
-    local Input = BaseInput.new()
+    local Input = MouseInput.new()
 
     local State = Tool:WaitForChild("State")
     local ChargedPercentValue = State:FindFirstChild("ChargedPercent") :: NumberValue
@@ -267,7 +267,7 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     end)
 
     --Connect using the tool.
-    Tool.Activated:Connect(function()
+    Input.StartFire:Connect(function()
         if not Equipped then return end
         if Configuration.FullAutomatic then
             Firing = true
@@ -284,17 +284,10 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             TryFire()
         end
     end)
-
-    Tool.Deactivated:Connect(function()
+    Input.EndFire:Connect(function()
         Firing = false
     end)
-
-    UserInputService.InputBegan:Connect(function(Input: InputObject, Processed: boolean)
-        if Processed then return end
-        if not Equipped then return end
-        if Input.KeyCode ~= Enum.KeyCode.R then return end
-        TryReload()
-    end)
+    Input.Reload:Connect(TryReload)
 end
 
 --[[

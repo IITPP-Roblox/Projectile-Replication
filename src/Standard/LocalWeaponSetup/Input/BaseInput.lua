@@ -21,6 +21,7 @@ export type BaseInput = {
     Reload: Event.Event<>,
 
     new: () -> (BaseInput),
+    ConnectReloadButton: (self: BaseInput, Button: Enum.KeyCode) -> (),
     GetTargetScreenSpace: (self: BaseInput) -> (Vector2),
     GetTargetWorldSpace: (self: BaseInput) -> (Vector3),
 }
@@ -36,6 +37,17 @@ function BaseInput.new(): BaseInput
         EndFire = Event.new(),
         Reload = Event.new(),
     }, BaseInput) :: any) :: BaseInput
+end
+
+--[[
+Connects a button press to invoke the reload event.
+--]]
+function BaseInput:ConnectReloadButton(Button: Enum.KeyCode): ()
+    UserInputService.InputBegan:Connect(function(Input, Processed)
+        if Processed then return end
+        if Input.KeyCode ~= Button then return end
+        self.Reload:Fire()
+    end)
 end
 
 --[[
