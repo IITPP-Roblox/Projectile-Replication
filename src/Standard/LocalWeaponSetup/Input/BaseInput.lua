@@ -7,6 +7,7 @@ Base input class.
 
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
 local UserInputService = game:GetService("UserInputService")
 
 local Projectile = require(script.Parent.Parent.Parent.Parent:WaitForChild("Projectile"))
@@ -54,7 +55,7 @@ end
 Returns the aiming location for the input in screen space.
 --]]
 function BaseInput:GetTargetScreenSpace(): Vector2
-    return UserInputService:GetMouseLocation()
+    return UserInputService:GetMouseLocation() - GuiService:GetGuiInset()
 end
 
 --[[
