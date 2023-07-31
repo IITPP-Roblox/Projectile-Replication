@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local WeaponState = require(script:WaitForChild("WeaponState"))
+local VibrationMotor = require(script:WaitForChild("Common"):WaitForChild("VibrationMotor"))
 local CombinedInput = require(script:WaitForChild("Input"):WaitForChild("CombinedInput"))
 local GamepadInput = require(script:WaitForChild("Input"):WaitForChild("GamepadInput"))
 local MouseInput = require(script:WaitForChild("Input"):WaitForChild("MouseInput"))
@@ -18,6 +19,7 @@ local TouchInput = require(script:WaitForChild("Input"):WaitForChild("TouchInput
 local BaseCrosshair = require(script:WaitForChild("UI"):WaitForChild("BaseCrosshair"))
 local MouseCrosshair = require(script:WaitForChild("UI"):WaitForChild("MouseCrosshair"))
 local VRCrosshair = require(script:WaitForChild("UI"):WaitForChild("VRCrosshair"))
+local Types = require(script.Parent.Parent:WaitForChild("Types"))
 
 local LocalWeaponSetup = {}
 
@@ -29,16 +31,20 @@ Sets up a tool.
 function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     local ProjectileReplication = require(script.Parent.Parent) :: any
     
+    local Configuration = require(Tool:WaitForChild("Configuration")) :: Types.StandardConfiguration
     local Handle = Tool:WaitForChild("Handle")
     local StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment
     local Input = CombinedInput.new(MouseInput.new(), TouchInput.new(), GamepadInput.new(Enum.KeyCode.ButtonR2))
     Input:ConnectReloadButton(Enum.KeyCode.ButtonY)
+    local WeaponState = WeaponState.new(Tool, Input)
+    if Configuration.GamepadVibrationMotor then
+        WeaponState:AddVibrationMotor(VibrationMotor.GetMotor(UserInputService.VREnabled and Enum.VibrationMotor.RightHand or Configuration.GamepadVibrationMotor))
+    end
 
     local CurrentCrosshair: BaseCrosshair.BaseCrosshair? = nil
     local Equipped = false
 
     --Connect equipping and unequipping the tool.
-    local WeaponState = WeaponState.new(Tool, Input)
     Tool.Equipped:Connect(function()
         Equipped = true
 

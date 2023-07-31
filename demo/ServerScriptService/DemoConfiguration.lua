@@ -73,4 +73,9 @@ return {
     --The time in seconds to charge down the gun.
     --If nil, no charge motor will be used.
     ChargeMaxMotorSpeed = nil,
+
+    --Gamepad vibration motor activated when fired.
+    GamepadVibrationMotor = Enum.VibrationMotor.Large,
+    GamepadVibrationMotorDuration = 0.1,
+    GamepadVibrationMotorIntesity = 0.5,
 }

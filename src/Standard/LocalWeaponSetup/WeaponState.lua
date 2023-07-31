@@ -8,6 +8,7 @@ Manages the weapon state for firing and reloading.
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
+local VibrationMotor = require(script.Parent:WaitForChild("Common"):WaitForChild("VibrationMotor"))
 local BaseInput = require(script.Parent:WaitForChild("Input"):WaitForChild("BaseInput"))
 local Types = require(script.Parent.Parent.Parent:WaitForChild("Types"))
 
@@ -18,6 +19,7 @@ export type WeaponState = {
     Firing: boolean,
     LastFireTime: number,
     Input: BaseInput.BaseInput,
+    Motors: {VibrationMotor.VibrationMotor},
     Configuration: Types.StandardConfiguration,
     Tool: Instance,
     Handle: BasePart,
@@ -29,6 +31,7 @@ export type WeaponState = {
 
     new: (Tool: Instance, Input: BaseInput.BaseInput) -> (WeaponState),
     GetAim: (self: WeaponState) -> (Vector3),
+    AddVibrationMotor: (self: WeaponState, Motor: VibrationMotor.VibrationMotor) -> (),
     Reload: (self: WeaponState) -> (),
     TryFire: (self: WeaponState) -> (),
     Fire: (self: WeaponState) -> (),
@@ -47,6 +50,7 @@ function WeaponState.new(Tool: Instance, Input: BaseInput.BaseInput): WeaponStat
         Firing = false,
         LastFireTime = 0,
         Input = Input,
+        Motors = {},
         Configuration = require(Tool:WaitForChild("Configuration")),
         Tool = Tool,
         Handle = Handle,
@@ -67,6 +71,13 @@ function WeaponState:GetAim(): Vector3
         return ((self.StartAttachment :: Attachment).WorldCFrame * CFrame.new(0, 0, -10000)).Position
     end
     return self.Input:GetTargetWorldSpace()
+end
+
+--[[
+Adds a vibration motor to the state.
+--]]
+function WeaponState:AddVibrationMotor(Motor: VibrationMotor.VibrationMotor): ()
+    table.insert(self.Motors, Motor)
 end
 
 --[[
@@ -95,6 +106,9 @@ function WeaponState:TryFire(): ()
     self.RemainingRoundsValue.Value = self.RemainingRoundsValue.Value - 1
     for _ = 1, self.Configuration.ProjectilesPerRound or 1 do
         self.ProjectileReplication:Fire(CFrame.new(self.StartAttachment.WorldPosition, self:GetAim()) * CFrame.Angles(0, 0, math.random() * math.pi * 2) * CFrame.Angles(math.random() * self.Configuration.ProjectileSpread, 0, 0), self.Handle, self.Configuration.ProjectilePreset)
+    end
+    for _, Motor in self.Motors do
+        Motor:Activate(self.Configuration.GamepadVibrationMotorDuration or 1, self.Configuration.GamepadVibrationMotorIntesity or 1)
     end
 end
 
