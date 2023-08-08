@@ -2,7 +2,6 @@
 TheNexusAvenger
 
 Handles inputs for touch displays.
-TODO: Not a great design, but does allow for holding down.
 --]]
 --!strict
 
@@ -35,43 +34,89 @@ export type TouchInput = {
 Creates the button display.
 --]]
 function TouchInput.CreateDisplay(): TouchInputDisplay
-    --TODO: Improve default design
     --Create the buttons.
+    --TODO: Add icons
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "StandardWeaponMobileInput"
     ScreenGui.DisplayOrder = 100
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-    local LeftFireButton = Instance.new("TextButton")
-    LeftFireButton.BackgroundTransparency = 0.5
+    local LeftFireButton = Instance.new("ImageButton")
+    LeftFireButton.BackgroundTransparency = 1
     LeftFireButton.AnchorPoint = Vector2.new(0, 1)
-    LeftFireButton.Size = UDim2.new(0.2, 0, 0.2, 0)
-    LeftFireButton.Position = UDim2.new(0.2, 0, 0.95, 0)
     LeftFireButton.SizeConstraint = Enum.SizeConstraint.RelativeYY
-    LeftFireButton.Text = "Fire"
-    LeftFireButton.TextScaled = true
+    LeftFireButton.Image = "rbxasset://textures/ui/Input/TouchControlsSheetV2.png"
+    LeftFireButton.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    LeftFireButton.ImageRectOffset = Vector2.new(1, 1)
+    LeftFireButton.ImageRectSize = Vector2.new(144, 144)
     LeftFireButton.Parent = ScreenGui
 
-    local RightFireButton = Instance.new("TextButton")
-    RightFireButton.BackgroundTransparency = 0.5
+    local RightFireButton = Instance.new("ImageButton")
+    RightFireButton.BackgroundTransparency = 1
     RightFireButton.AnchorPoint = Vector2.new(1, 1)
-    RightFireButton.Size = UDim2.new(0.2, 0, 0.2, 0)
-    RightFireButton.Position = UDim2.new(0.8, 0, 0.95, 0)
     RightFireButton.SizeConstraint = Enum.SizeConstraint.RelativeYY
-    RightFireButton.Text = "Fire"
-    RightFireButton.TextScaled = true
+    RightFireButton.Image = "rbxasset://textures/ui/Input/TouchControlsSheetV2.png"
+    RightFireButton.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    RightFireButton.ImageRectOffset = Vector2.new(1, 1)
+    RightFireButton.ImageRectSize = Vector2.new(144, 144)
     RightFireButton.Parent = ScreenGui
 
-    local RightReloadButton = Instance.new("TextButton")
-    RightReloadButton.BackgroundTransparency = 0.5
+    local RightReloadButton = Instance.new("ImageButton")
+    RightReloadButton.BackgroundTransparency = 1
     RightReloadButton.AnchorPoint = Vector2.new(1, 1)
-    RightReloadButton.Size = UDim2.new(0.2, 0, 0.2, 0)
-    RightReloadButton.Position = UDim2.new(0.9, 0, 0.65, 0)
     RightReloadButton.SizeConstraint = Enum.SizeConstraint.RelativeYY
-    RightReloadButton.Text = "Reload"
-    RightReloadButton.TextScaled = true
+    RightReloadButton.Image = "rbxasset://textures/ui/Input/TouchControlsSheetV2.png"
+    RightReloadButton.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    RightReloadButton.ImageRectOffset = Vector2.new(1, 1)
+    RightReloadButton.ImageRectSize = Vector2.new(144, 144)
     RightReloadButton.Parent = ScreenGui
+
+    --Set up the button effects.
+    for _, Button in {LeftFireButton, RightFireButton, RightReloadButton} do
+        Button.MouseButton1Down:Connect(function()
+            Button.ImageColor3 = Color3.fromRGB(128, 128, 128)
+        end)
+        Button.MouseButton1Up:Connect(function()
+            Button.ImageColor3 = Color3.fromRGB(0, 0, 0)
+        end)
+        Button.MouseLeave:Connect(function()
+            Button.ImageColor3 = Color3.fromRGB(0, 0, 0)
+        end)
+    end
+
+    --[[
+    Updates the buttons.
+    --]]
+    local function UpdateButtons(): ()
+        local ViewSize = ScreenGui.AbsoluteSize
+        local IsSmallScreen = (math.min(ViewSize.X, ViewSize.Y) <= 500)
+
+        --Update the button sizes.
+        local FireButtonSize = (IsSmallScreen and 70 or 120)
+        LeftFireButton.Size = UDim2.new(0, FireButtonSize, 0, FireButtonSize)
+        RightFireButton.Size = UDim2.new(0, FireButtonSize, 0, FireButtonSize)
+        RightReloadButton.Size = UDim2.new(0, FireButtonSize * 0.8, 0, FireButtonSize * 0.8)
+
+        --Update the button positions.
+        if ViewSize.X > ViewSize.Y then
+            local FireButtonBottomOffset = (IsSmallScreen and -10 or (-FireButtonSize * 0.5))
+            LeftFireButton.Position = UDim2.new(0, FireButtonSize * 2, 1, FireButtonBottomOffset)
+            RightFireButton.Position = UDim2.new(1, (-FireButtonSize * 1.5) - 10, 1, FireButtonBottomOffset)
+            RightReloadButton.Position = UDim2.new(1, -(FireButtonSize * 0.4), 1, (IsSmallScreen and -((FireButtonSize * 1.5) + 10) or -FireButtonSize * 1.85))
+            LeftFireButton.Visible = true
+        else
+            local FireButtonSideOffset = -(FireButtonSize * 0.3)
+            local FireButtonBottomOffset = (IsSmallScreen and -20 or (-FireButtonSize * 0.75)) - (1.1 * FireButtonSize)
+            RightFireButton.Position = UDim2.new(1, FireButtonSideOffset, 1, FireButtonBottomOffset)
+            RightReloadButton.Position = UDim2.new(1, FireButtonSideOffset, 1, FireButtonBottomOffset - (1.1 * FireButtonSize))
+            LeftFireButton.Visible = false
+        end
+    end
+    
+    --Update the buttons.
+    UpdateButtons()
+    ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateButtons)
 
     --Return the object.
     return {
