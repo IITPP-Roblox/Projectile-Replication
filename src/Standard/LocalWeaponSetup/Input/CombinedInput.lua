@@ -27,10 +27,17 @@ function CombinedInput.new(...: BaseInput.BaseInput): CombinedInput
     local self = (BaseInput.new() :: any) :: CombinedInput
     setmetatable(self, CombinedInput)
 
-    --Connect firing events.
+    --Get the initial input.
     local Inputs = {...}
     self.Inputs = Inputs
     self.CurrentInput = Inputs[1]
+    for _, Input in self.Inputs do
+        if not Input:IsPriority() then continue end
+        self.CurrentInput = Input
+        break
+    end
+
+    --Connect firing events.
     for _, Input in Inputs do
         table.insert(self.Events, Input.StartFire:Connect(function()
             self.CurrentInput = Input

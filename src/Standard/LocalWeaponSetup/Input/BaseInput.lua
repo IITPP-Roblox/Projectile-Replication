@@ -23,6 +23,7 @@ export type BaseInput = {
 
     Events: {RBXScriptConnection},
     new: () -> (BaseInput),
+    IsPriority: (self: BaseInput) -> (boolean),
     ConnectReloadButton: (self: BaseInput, Button: Enum.KeyCode) -> (),
     GetTargetScreenSpace: (self: BaseInput) -> (Vector2),
     GetTargetWorldSpace: (self: BaseInput) -> (Vector3),
@@ -41,6 +42,13 @@ function BaseInput.new(): BaseInput
         Reload = Event.new(),
         Events = {},
     }, BaseInput) :: any) :: BaseInput
+end
+
+--[[
+Returns if the input is a priority for the combined input.
+--]]
+function BaseInput:IsPriority(): boolean
+    return false
 end
 
 --[[
