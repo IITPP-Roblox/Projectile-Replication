@@ -35,6 +35,9 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     local Handle = Tool:WaitForChild("Handle")
     local StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment
     local WeaponState = WeaponState.new(Tool)
+    if Configuration.GamepadVibrationMotor then
+        WeaponState:AddVibrationMotor(VibrationMotor.GetMotor(UserInputService.VREnabled and Enum.VibrationMotor.RightHand or Configuration.GamepadVibrationMotor))
+    end
 
     local CurrentCrosshair: BaseCrosshair.BaseCrosshair? = nil
     local CurrentInput: CombinedInput.CombinedInput? = nil
@@ -53,9 +56,6 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
         local Input = CombinedInput.new(MouseInput.new(), TouchInput.new(), GamepadInput.new(Enum.KeyCode.ButtonR2))
         Input:ConnectReloadButton(Enum.KeyCode.ButtonY)
         WeaponState:SetInput(Input)
-        if Configuration.GamepadVibrationMotor then
-            WeaponState:AddVibrationMotor(VibrationMotor.GetMotor(UserInputService.VREnabled and Enum.VibrationMotor.RightHand or Configuration.GamepadVibrationMotor))
-        end
         CurrentInput = Input
 
         --Connect using the tool.
