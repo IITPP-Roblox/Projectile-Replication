@@ -18,7 +18,7 @@ WeaponState.__index = WeaponState
 export type WeaponState = {
     Firing: boolean,
     LastFireTime: number,
-    Input: BaseInput.BaseInput,
+    Input: BaseInput.BaseInput?,
     Motors: {VibrationMotor.VibrationMotor},
     Configuration: Types.StandardConfiguration,
     Tool: Instance,
@@ -29,8 +29,9 @@ export type WeaponState = {
     ChargedPercentValue: NumberValue?,
     ProjectileReplication: any,
 
-    new: (Tool: Instance, Input: BaseInput.BaseInput) -> (WeaponState),
+    new: (Tool: Instance) -> (WeaponState),
     GetAim: (self: WeaponState) -> (Vector3),
+    SetInput: (self: WeaponState, Input: BaseInput.BaseInput?) -> (),
     AddVibrationMotor: (self: WeaponState, Motor: VibrationMotor.VibrationMotor) -> (),
     Reload: (self: WeaponState) -> (),
     TryFire: (self: WeaponState) -> (),
@@ -43,13 +44,12 @@ export type WeaponState = {
 --[[
 Creates a weapon state.
 --]]
-function WeaponState.new(Tool: Instance, Input: BaseInput.BaseInput): WeaponState
+function WeaponState.new(Tool: Instance): WeaponState
     local Handle = Tool:WaitForChild("Handle") :: BasePart
     local State = Tool:WaitForChild("State")
     return (setmetatable({
         Firing = false,
         LastFireTime = 0,
-        Input = Input,
         Motors = {},
         Configuration = require(Tool:WaitForChild("Configuration")),
         Tool = Tool,
@@ -70,7 +70,17 @@ function WeaponState:GetAim(): Vector3
     if UserInputService.VREnabled then
         return ((self.StartAttachment :: Attachment).WorldCFrame * CFrame.new(0, 0, -10000)).Position
     end
+    if not self.Input then
+        return Vector3.zero
+    end
     return self.Input:GetTargetWorldSpace()
+end
+
+--[[
+Sets the input for the weapon state.
+--]]
+function WeaponState:SetInput(Input: BaseInput.BaseInput?): ()
+    self.Input = Input
 end
 
 --[[

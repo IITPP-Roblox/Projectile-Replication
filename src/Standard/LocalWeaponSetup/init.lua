@@ -34,14 +34,10 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
     local Configuration = require(Tool:WaitForChild("Configuration")) :: Types.StandardConfiguration
     local Handle = Tool:WaitForChild("Handle")
     local StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment
-    local Input = CombinedInput.new(MouseInput.new(), TouchInput.new(), GamepadInput.new(Enum.KeyCode.ButtonR2))
-    Input:ConnectReloadButton(Enum.KeyCode.ButtonY)
-    local WeaponState = WeaponState.new(Tool, Input)
-    if Configuration.GamepadVibrationMotor then
-        WeaponState:AddVibrationMotor(VibrationMotor.GetMotor(UserInputService.VREnabled and Enum.VibrationMotor.RightHand or Configuration.GamepadVibrationMotor))
-    end
+    local WeaponState = WeaponState.new(Tool)
 
     local CurrentCrosshair: BaseCrosshair.BaseCrosshair? = nil
+    local CurrentInput: CombinedInput.CombinedInput? = nil
     local Equipped = false
 
     --Connect equipping and unequipping the tool.
@@ -52,6 +48,28 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
         local Crosshair = (UserInputService.VREnabled and VRCrosshair.new(StartAttachment) or MouseCrosshair.new())
         Crosshair:ConnectStandard(Tool)
         CurrentCrosshair = Crosshair
+
+        --Create the input.
+        local Input = CombinedInput.new(MouseInput.new(), TouchInput.new(), GamepadInput.new(Enum.KeyCode.ButtonR2))
+        Input:ConnectReloadButton(Enum.KeyCode.ButtonY)
+        WeaponState:SetInput(Input)
+        if Configuration.GamepadVibrationMotor then
+            WeaponState:AddVibrationMotor(VibrationMotor.GetMotor(UserInputService.VREnabled and Enum.VibrationMotor.RightHand or Configuration.GamepadVibrationMotor))
+        end
+        CurrentInput = Input
+
+        --Connect using the tool.
+        Input.StartFire:Connect(function()
+            if not Equipped then return end
+            WeaponState:Fire()
+        end)
+        Input.EndFire:Connect(function()
+            WeaponState:StopFiring()
+        end)
+        Input.Reload:Connect(function()
+            if not Equipped then return end
+            WeaponState:Reload()
+        end)
 
         --Update the aim if the user isn't in VR.
         if not UserInputService.VREnabled then
@@ -74,19 +92,10 @@ function LocalWeaponSetup:SetupTool(Tool: Tool): ()
             CurrentCrosshair:Destroy()
             CurrentCrosshair = nil
         end
-    end)
-
-    --Connect using the tool.
-    Input.StartFire:Connect(function()
-        if not Equipped then return end
-        WeaponState:Fire()
-    end)
-    Input.EndFire:Connect(function()
-        WeaponState:StopFiring()
-    end)
-    Input.Reload:Connect(function()
-        if not Equipped then return end
-        WeaponState:Reload()
+        if CurrentInput then
+            CurrentInput:Destroy()
+            CurrentInput = nil
+        end
     end)
 end
 
