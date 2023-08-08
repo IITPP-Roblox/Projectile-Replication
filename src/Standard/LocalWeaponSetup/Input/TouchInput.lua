@@ -35,7 +35,6 @@ Creates the button display.
 --]]
 function TouchInput.CreateDisplay(): TouchInputDisplay
     --Create the buttons.
-    --TODO: Add icons
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "StandardWeaponMobileInput"
     ScreenGui.DisplayOrder = 100
@@ -52,6 +51,19 @@ function TouchInput.CreateDisplay(): TouchInputDisplay
     LeftFireButton.ImageRectSize = Vector2.new(144, 144)
     LeftFireButton.Parent = ScreenGui
 
+    local LeftFireButtonText = Instance.new("TextLabel")
+    LeftFireButtonText.BackgroundTransparency = 1
+    LeftFireButtonText.AnchorPoint = Vector2.new(0.5, 0.5)
+    LeftFireButtonText.Name = "ButtonText"
+    LeftFireButtonText.Position = UDim2.new(0.5, 0, 0.5, 0)
+    LeftFireButtonText.Size = UDim2.new(0.75, 0, 0.4, 0)
+    LeftFireButtonText.Font = Enum.Font.SourceSansBold
+    LeftFireButtonText.Text = "FIRE"
+    LeftFireButtonText.TextScaled = true
+    LeftFireButtonText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LeftFireButtonText.TextTransparency = 0.5
+    LeftFireButtonText.Parent = LeftFireButton
+
     local RightFireButton = Instance.new("ImageButton")
     RightFireButton.BackgroundTransparency = 1
     RightFireButton.AnchorPoint = Vector2.new(1, 1)
@@ -61,6 +73,19 @@ function TouchInput.CreateDisplay(): TouchInputDisplay
     RightFireButton.ImageRectOffset = Vector2.new(1, 1)
     RightFireButton.ImageRectSize = Vector2.new(144, 144)
     RightFireButton.Parent = ScreenGui
+
+    local RightFireButtonText = Instance.new("TextLabel")
+    RightFireButtonText.BackgroundTransparency = 1
+    RightFireButtonText.AnchorPoint = Vector2.new(0.5, 0.5)
+    RightFireButtonText.Name = "ButtonText"
+    RightFireButtonText.Position = UDim2.new(0.5, 0, 0.5, 0)
+    RightFireButtonText.Size = UDim2.new(0.75, 0, 0.4, 0)
+    RightFireButtonText.Font = Enum.Font.SourceSansBold
+    RightFireButtonText.Text = "FIRE"
+    RightFireButtonText.TextScaled = true
+    RightFireButtonText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    RightFireButtonText.TextTransparency = 0.5
+    RightFireButtonText.Parent = RightFireButton
 
     local RightReloadButton = Instance.new("ImageButton")
     RightReloadButton.BackgroundTransparency = 1
@@ -72,16 +97,33 @@ function TouchInput.CreateDisplay(): TouchInputDisplay
     RightReloadButton.ImageRectSize = Vector2.new(144, 144)
     RightReloadButton.Parent = ScreenGui
 
+    local RightReloadButtonText = Instance.new("TextLabel")
+    RightReloadButtonText.BackgroundTransparency = 1
+    RightReloadButtonText.AnchorPoint = Vector2.new(0.5, 0.5)
+    RightReloadButtonText.Name = "ButtonText"
+    RightReloadButtonText.Position = UDim2.new(0.5, 0, 0.5, 0)
+    RightReloadButtonText.Size = UDim2.new(0.75, 0, 0.4, 0)
+    RightReloadButtonText.Font = Enum.Font.SourceSansBold
+    RightReloadButtonText.Text = "RELOAD"
+    RightReloadButtonText.TextScaled = true
+    RightReloadButtonText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    RightReloadButtonText.TextTransparency = 0.5
+    RightReloadButtonText.Parent = RightReloadButton
+
     --Set up the button effects.
     for _, Button in {LeftFireButton, RightFireButton, RightReloadButton} do
+        local ButtonText = Button:FindFirstChild("ButtonText") :: TextLabel
         Button.MouseButton1Down:Connect(function()
             Button.ImageColor3 = Color3.fromRGB(128, 128, 128)
+            ButtonText.TextColor3 = Color3.fromRGB(0, 0, 0)
         end)
         Button.MouseButton1Up:Connect(function()
             Button.ImageColor3 = Color3.fromRGB(0, 0, 0)
+            ButtonText.TextColor3 = Color3.fromRGB(255, 255, 255)
         end)
         Button.MouseLeave:Connect(function()
             Button.ImageColor3 = Color3.fromRGB(0, 0, 0)
+            ButtonText.TextColor3 = Color3.fromRGB(255, 255, 255)
         end)
     end
 
