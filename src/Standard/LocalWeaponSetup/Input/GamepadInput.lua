@@ -13,7 +13,7 @@ local UserInputService = game:GetService("UserInputService")
 local BaseInput = require(script.Parent:WaitForChild("BaseInput"))
 
 local GamepadInput = {}
-GamepadInput.__index = BaseInput
+GamepadInput.__index = GamepadInput
 setmetatable(GamepadInput, BaseInput)
 
 export type GamepadInput = {

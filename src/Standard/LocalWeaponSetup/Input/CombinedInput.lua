@@ -8,7 +8,7 @@ Combines multiple input sources into a single input handler.
 local BaseInput = require(script.Parent:WaitForChild("BaseInput"))
 
 local CombinedInput = {}
-CombinedInput.__index = BaseInput
+CombinedInput.__index = CombinedInput
 setmetatable(CombinedInput, BaseInput)
 
 export type CombinedInput = {

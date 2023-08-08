@@ -10,7 +10,7 @@ local UserInputService = game:GetService("UserInputService")
 local BaseInput = require(script.Parent:WaitForChild("BaseInput"))
 
 local MouseInput = {}
-MouseInput.__index = BaseInput
+MouseInput.__index = MouseInput
 setmetatable(MouseInput, BaseInput)
 
 export type MouseInput = {
