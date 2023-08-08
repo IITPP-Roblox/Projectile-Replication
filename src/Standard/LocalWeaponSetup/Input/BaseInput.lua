@@ -21,10 +21,12 @@ export type BaseInput = {
     EndFire: Event.Event<>,
     Reload: Event.Event<>,
 
+    Events: {RBXScriptConnection},
     new: () -> (BaseInput),
     ConnectReloadButton: (self: BaseInput, Button: Enum.KeyCode) -> (),
     GetTargetScreenSpace: (self: BaseInput) -> (Vector2),
     GetTargetWorldSpace: (self: BaseInput) -> (Vector3),
+    Destroy: (self: BaseInput) -> (),
 }
 
 
@@ -37,6 +39,7 @@ function BaseInput.new(): BaseInput
         StartFire = Event.new(),
         EndFire = Event.new(),
         Reload = Event.new(),
+        Events = {},
     }, BaseInput) :: any) :: BaseInput
 end
 
@@ -67,6 +70,20 @@ function BaseInput:GetTargetWorldSpace(): Vector3
     local CameraRay = Camera:ScreenPointToRay(MousePosition.X, MousePosition.Y, 10000)
     local _, EndPosition = Projectile.RayCast(Camera.CFrame.Position, CameraRay.Origin + CameraRay.Direction, {Players.LocalPlayer.Character, Camera})
     return EndPosition
+end
+
+--[[
+Destroys the input.
+--]]
+function BaseInput:Destroy(): ()
+    for _, Event in self.Events do
+        Event:Disconnect()
+    end
+    self.Events = {}
+
+    self.StartFire:Destroy()
+    self.EndFire:Destroy()
+    self.Reload:Destroy()
 end
 
 

@@ -13,8 +13,9 @@ setmetatable(CombinedInput, BaseInput)
 
 export type CombinedInput = {
     CurrentInput: BaseInput.BaseInput,
-
-    new: (...BaseInput.BaseInput) -> (CombinedInput)
+    Inputs: {BaseInput.BaseInput},
+    new: (...BaseInput.BaseInput) -> (CombinedInput),
+    Destroy: (CombinedInput) -> (),
 } & BaseInput.BaseInput
 
 
@@ -28,20 +29,21 @@ function CombinedInput.new(...: BaseInput.BaseInput): CombinedInput
 
     --Connect firing events.
     local Inputs = {...}
+    self.Inputs = Inputs
     self.CurrentInput = Inputs[1]
     for _, Input in Inputs do
-        Input.StartFire:Connect(function()
+        table.insert(self.Events, Input.StartFire:Connect(function()
             self.CurrentInput = Input
             self.StartFire:Fire()
-        end)
-        Input.EndFire:Connect(function()
+        end))
+        table.insert(self.Events, Input.EndFire:Connect(function()
             --Only the latest input is allowed to control when firing is stopped.
             if self.CurrentInput ~= Input then return end
             self.EndFire:Fire()
-        end)
-        Input.Reload:Connect(function()
+        end))
+        table.insert(self.Events, Input.Reload:Connect(function()
             self.Reload:Fire()
-        end)
+        end))
     end
     return self
 end
@@ -60,6 +62,15 @@ function CombinedInput:GetTargetWorldSpace(): Vector3
     return self.CurrentInput:GetTargetWorldSpace()
 end
 
+--[[
+Destroys the input.
+--]]
+function CombinedInput:Destroy(): ()
+    BaseInput.Destroy(self)
+    for _, Input in (self :: CombinedInput).Inputs do
+        Input:Destroy()
+    end
+end
 
 
 return (CombinedInput :: any) :: CombinedInput

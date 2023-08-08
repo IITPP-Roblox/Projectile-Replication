@@ -30,15 +30,15 @@ function MouseInput.new(): MouseInput
     self:ConnectReloadButton(Enum.KeyCode.R)
 
     --Connect firing events.
-    UserInputService.InputBegan:Connect(function(Input, Processed)
+    table.insert(self.Events, UserInputService.InputBegan:Connect(function(Input, Processed)
         if Processed then return end
         if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
         self.StartFire:Fire()
-    end)
-    UserInputService.InputEnded:Connect(function(Input)
+    end))
+    table.insert(self.Events, UserInputService.InputEnded:Connect(function(Input)
         if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
         self.EndFire:Fire()
-    end)
+    end))
     return self
 end
 

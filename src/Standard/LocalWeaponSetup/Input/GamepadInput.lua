@@ -31,7 +31,7 @@ function GamepadInput.new(FireButton: Enum.KeyCode): GamepadInput
 
     --Connect firing events.
     local FireActive = false
-    UserInputService.InputChanged:Connect(function(Input, Processed)
+    table.insert(self.Events, UserInputService.InputChanged:Connect(function(Input, Processed)
         if Input.KeyCode ~= FireButton then return end
         if Input.Position.Z >= START_FIRE_THRESHOLD and not FireActive and not Processed then
             FireActive = true
@@ -40,7 +40,7 @@ function GamepadInput.new(FireButton: Enum.KeyCode): GamepadInput
             FireActive = false
             self.EndFire:Fire()
         end
-    end)
+    end))
     return self
 end
 
