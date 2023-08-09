@@ -21,6 +21,15 @@ local ProjectileReplication = {}
 local UpdateAimFunctions = {}
 setmetatable(UpdateAimFunctions, {__mode="k"})
 
+export type ProjectileReplication = {
+    SetUpCalled: boolean,
+    
+    Fire: (self: ProjectileReplication, StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?) -> (),
+    Reload: (self: ProjectileReplication, Player: Player?, Tool: Tool?) -> (),
+    Aim: (self: ProjectileReplication, Player: Player, AimPosition: Vector3) -> (),
+    SetUp: (self: ProjectileReplication) -> (),
+}
+
 
 
 --Create or get the RemoteEvent.
@@ -403,4 +412,4 @@ end
 
 
 
-return ProjectileReplication
+return (ProjectileReplication :: any) :: ProjectileReplication

@@ -47,6 +47,9 @@ export type StandardConfiguration = {
     AnimationJoints: {[string]: {[string]: CFrame}},
     ChargeUpTime: number?,
     ChargeDownTime: number?,
+    GamepadVibrationMotor: Enum.VibrationMotor?,
+    GamepadVibrationMotorDuration: number?,
+    GamepadVibrationMotorIntesity: number?,
 }
 
 
