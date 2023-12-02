@@ -20,6 +20,8 @@ local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectileP
 local ProjectileReplication = {}
 local UpdateAimFunctions = {}
 setmetatable(UpdateAimFunctions, {__mode="k"})
+local LastAimUpdateTimes = {}
+setmetatable(LastAimUpdateTimes, {__mode="k"})
 
 export type ProjectileReplication = {
     SetUpCalled: boolean,
@@ -35,7 +37,7 @@ export type ProjectileReplication = {
 --Create or get the RemoteEvent.
 local FireProjectileEvent: RemoteEvent = nil
 local ReloadEvent: RemoteEvent = nil
-local UpdateAimEvent: RemoteEvent = nil
+local UpdateAimEvent: UnreliableRemoteEvent = nil
 if RunService:IsClient() then
     FireProjectileEvent = script:WaitForChild("FireProjectile")
     ReloadEvent = script:WaitForChild("Reload")
@@ -49,7 +51,7 @@ else
     ReloadEvent.Name = "Reload"
     ReloadEvent.Parent = script
 
-    UpdateAimEvent = script:FindFirstChild("UpdateAim") or Instance.new("RemoteEvent")
+    UpdateAimEvent = script:FindFirstChild("UpdateAim") or Instance.new("UnreliableRemoteEvent")
     UpdateAimEvent.Name = "UpdateAim"
     UpdateAimEvent.Parent = script
 end
@@ -167,7 +169,9 @@ end
 --[[
 Sets the aim of a player to a given CFrame.
 --]]
-function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
+function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3, SendTime: number?): ()
+    SendTime = SendTime or tick()
+
     --Get or create the update function.
     local Character = Player.Character :: Model
     if not Character then return end
@@ -306,6 +310,7 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
             if UpdateAimFunctions[Character] == CurrentUpdateFunction then
                 UpdateAimFunctions[Character] = nil
             end
+            LastAimUpdateTimes[Character] = nil
 
             --Reset the root and shoulder.
             RightShoulder.C0 = RightShoulderRigAttachment.CFrame
@@ -321,13 +326,18 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3): ()
         end)
     end
 
+    --Drop the update if the last update time is after the previous one.
+    --UnreliableRemoteEvents do not guarentee ordering. It is better to drop old packets instead of showing out of order updates.
+    if LastAimUpdateTimes[Character] and LastAimUpdateTimes[Character] > SendTime then return end
+    LastAimUpdateTimes[Character] = SendTime
+
     --Update the aim.
     if not UpdateAimFunctions[Character] then return end
     UpdateAimFunctions[Character](AimPosition)
 
     --Replicate the aim.
     if Player ~= Players.LocalPlayer then return end
-    UpdateAimEvent:FireServer(AimPosition)
+    UpdateAimEvent:FireServer(AimPosition, SendTime)
 end
 
 --[[
@@ -349,8 +359,8 @@ function ProjectileReplication:SetUp(): ()
         end)
 
         --Connect the aim updating.
-        UpdateAimEvent.OnClientEvent:Connect(function(Player: Player, AimPosition: Vector3)
-            self:Aim(Player, AimPosition)
+        UpdateAimEvent.OnClientEvent:Connect(function(Player: Player, AimPosition: Vector3, SendTime: number)
+            self:Aim(Player, AimPosition, SendTime)
         end)
     else
         --Connect requests for projectiles being fired.
@@ -392,7 +402,7 @@ function ProjectileReplication:SetUp(): ()
         end)
 
         --Connect requests for updating the aim of players.
-        UpdateAimEvent.OnServerEvent:Connect(function(Player: Player, AimPosition: Vector3)
+        UpdateAimEvent.OnServerEvent:Connect(function(Player: Player, AimPosition: Vector3, SendTime: number)
             --Determine if the player can aim.
             local Character = Player.Character :: Model
             if not Character then return end
@@ -401,9 +411,9 @@ function ProjectileReplication:SetUp(): ()
             if not Humnanoid or Humnanoid.Health <= 0 or not Tool then return end
 
             --Send the aim requests.
-            for _, OtherPlayer in pairs(Players:GetPlayers()) do
+            for _, OtherPlayer in Players:GetPlayers() do
                 if Player ~= OtherPlayer then
-                    UpdateAimEvent:FireClient(OtherPlayer, Player, AimPosition)
+                    UpdateAimEvent:FireClient(OtherPlayer, Player, AimPosition, SendTime)
                 end
             end
         end)
