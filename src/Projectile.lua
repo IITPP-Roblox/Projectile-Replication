@@ -6,8 +6,8 @@ Controls the logic for projectiles.
 --!strict
 
 local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
 
+local ProjectileUpdateLoop = require(script.Parent:WaitForChild("ProjectileUpdateLoop"))
 local ProjctileTypes = require(script.Parent:WaitForChild("Types"))
 
 local Projectile = {}
@@ -93,6 +93,7 @@ function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number
         ProjectilePart.CanCollide = false
         ProjectilePart.Anchored = true
         ProjectilePart.Shape = Enum.PartType.Cylinder
+        ProjectilePart.CFrame = CFrame.new(0, math.huge, 0)
         if self.Appearance.Properties then
             for Name, Value in self.Appearance.Properties do
                 (ProjectilePart :: any)[Name] = Value
@@ -104,47 +105,16 @@ function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number
         table.insert(NewIgnoreList, ProjectilePart)
     end
 
-    --Start the projectile math.
-    task.spawn(function()
-        local ProjectileHit = false
-        local StartTime = tick()
-        local EndTime = tick() + MaxLifetime
-        local LastUpdateTime = StartTime
-        local ExtraProjectileLength = ((self.Appearance and self.Appearance.LengthStuds) or 0) / Speed
-        local ProjectileDiameter = (self.Appearance and self.Appearance.Diameter) or 0.2
-
-        --Run the Projectile math until the end.
-        while tick() < EndTime + ExtraProjectileLength do
-            --Determine the end position and hit.
-            local NewTime = tick()
-            if not ProjectileHit then
-                local PreviousEndPosition = (StartCFrame * CFrame.new(0, 0, -Speed * (LastUpdateTime - StartTime))).Position
-                local NewEndPosition = (StartCFrame * CFrame.new(0, 0, -Speed * (NewTime - StartTime))).Position
-                local HitPart, HitEndPosition = Projectile.RayCast(PreviousEndPosition, NewEndPosition, IgnoreList)
-                if HitPart then
-                    ProjectileHit = true
-                    EndTime = StartTime + ((HitEndPosition - StartCFrame.Position).Magnitude / Speed)
-                    self.OnHitEvent:Fire(HitPart, HitEndPosition, self)
-                end
-            end
-
-            --Update the Projectile.
-            if ProjectilePart then
-                local ProjectileStartPosition = (StartCFrame * CFrame.new(0, 0, -Speed * math.max(0, NewTime - StartTime - ExtraProjectileLength))).Position
-                local ProjectileEndPosition = (StartCFrame * CFrame.new(0, 0, -Speed * math.min(EndTime - StartTime, NewTime - StartTime))).Position
-                local ProjectileLength = (ProjectileEndPosition - ProjectileStartPosition).Magnitude
-                ProjectilePart.CFrame = CFrame.new(ProjectileStartPosition, ProjectileEndPosition) * CFrame.new(0, 0, -ProjectileLength / 2) * CFrame.Angles(0, math.pi / 2, 0)
-                ProjectilePart.Size = Vector3.new(ProjectileLength, ProjectileDiameter, ProjectileDiameter)
-            end
-
-            --Wait to update.
-            LastUpdateTime = NewTime
-            RunService.Stepped:Wait()
-        end
-
-        --Destroy the Projectile.
-        self:Destroy()
-    end)
+    --Add the projectile to the loop.
+    ProjectileUpdateLoop:AddProjectile({
+        Projectile = self,
+        Speed = Speed,
+        StartCFrame = StartCFrame,
+        MaxLifetime = MaxLifetime,
+        ExtraProjectileLength = ((self.Appearance and self.Appearance.LengthStuds) or 0) / Speed,
+        ProjectileDiameter = (self.Appearance and self.Appearance.Diameter) or 0.2,
+        IgnoreList = IgnoreList,
+    })
 end
 
 --[[

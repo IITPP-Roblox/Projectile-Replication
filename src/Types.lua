@@ -24,12 +24,14 @@ export type ProjectilePreset = {
 }
 
 export type Projectile = {
+    ProjectilePart: BasePart?,
     OnHit: RBXScriptSignal,
+    OnHitEvent: BindableEvent,
     Source: Instance?,
     RayCast: (Vector3, Vector3, {Instance}?) -> (BasePart?, Vector3),
     new: (ProjectileAppearance) -> Projectile,
     Fire: (Projectile, CFrame, number, number, {Instance}?) -> (),
-    Destroy: () -> (),
+    Destroy: (Projectile) -> (),
 }
 
 export type StandardConfiguration = {
