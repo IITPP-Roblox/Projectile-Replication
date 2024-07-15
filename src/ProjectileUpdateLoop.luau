@@ -27,6 +27,7 @@ type ProjectileState = {
     EndTime: number,
     LastUpdateTime: number,
     ExtraProjectileLength: number,
+    LastProjectileLength: number,
     ProjectileDiameter: number,
     WasHit: boolean,
     IgnoreList: {Instance}?,
@@ -68,7 +69,10 @@ function ProjectileUpdateLoop.Update(self: ProjectileUpdateLoop): ()
             local ProjectileEndPosition = (StartCFrame * CFrame.new(0, 0, -Speed * math.min(ActiveProjectile.EndTime - StartTime, NewTime - StartTime))).Position
             local ProjectileLength = (ProjectileEndPosition - ProjectileStartPosition).Magnitude
             ProjectilePart.CFrame = CFrame.new(ProjectileStartPosition, ProjectileEndPosition) * CFrame.new(0, 0, -ProjectileLength / 2) * CFrame.Angles(0, math.pi / 2, 0)
-            ProjectilePart.Size = Vector3.new(ProjectileLength, ProjectileDiameter, ProjectileDiameter)
+            if math.abs(ActiveProjectile.LastProjectileLength - ProjectileLength) > 0.001 then
+                ProjectilePart.Size = Vector3.new(ProjectileLength, ProjectileDiameter, ProjectileDiameter)
+            end
+            ActiveProjectile.LastProjectileLength = ProjectileLength
         end
 
         --Store the last update time.
@@ -99,6 +103,7 @@ function ProjectileUpdateLoop.AddProjectile(self: ProjectileUpdateLoop, Projecti
         ProjectileDiameter = ProjectileData.ProjectileDiameter,
         WasHit = false,
         IgnoreList = ProjectileData.IgnoreList,
+        LastProjectileLength = 0,
     })
 end
 
