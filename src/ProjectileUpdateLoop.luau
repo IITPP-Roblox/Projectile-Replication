@@ -1,6 +1,7 @@
 --Update loop for all current projectiles.
 --!strict
 
+local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
 local Types = require(script.Parent:WaitForChild("Types"))
@@ -42,6 +43,8 @@ function ProjectileUpdateLoop.Update(self: ProjectileUpdateLoop): ()
     --Update the projectiles.
     debug.profilebegin("ProjectileReplicationUpdate")
     local NewTime = tick()
+    local IsClient = RunService:IsClient()
+    local BulkMoveParts, BulkMoveCFrames = table.create(#self.ActiveProjectiles), table.create(#self.ActiveProjectiles)
     for i = #self.ActiveProjectiles, 1, -1 do
         --Determine the end position and hit.
         local ActiveProjectile = self.ActiveProjectiles[i]
@@ -63,12 +66,20 @@ function ProjectileUpdateLoop.Update(self: ProjectileUpdateLoop): ()
         --Update the part.
         local ProjectilePart = Projectile.ProjectilePart
         if ProjectilePart then
+            --Calculate the projectile physical properties.
             local ExtraProjectileLength = ActiveProjectile.ExtraProjectileLength
             local ProjectileDiameter = ActiveProjectile.ProjectileDiameter
             local ProjectileStartPosition = (StartCFrame * CFrame.new(0, 0, -Speed * math.max(0, NewTime - StartTime - ExtraProjectileLength))).Position
             local ProjectileEndPosition = (StartCFrame * CFrame.new(0, 0, -Speed * math.min(ActiveProjectile.EndTime - StartTime, NewTime - StartTime))).Position
             local ProjectileLength = (ProjectileEndPosition - ProjectileStartPosition).Magnitude
-            ProjectilePart.CFrame = CFrame.new(ProjectileStartPosition, ProjectileEndPosition) * CFrame.new(0, 0, -ProjectileLength / 2) * CFrame.Angles(0, math.pi / 2, 0)
+            
+            --Store the CFrame to set in bulk.
+            if IsClient then
+                table.insert(BulkMoveParts, ProjectilePart)
+                table.insert(BulkMoveCFrames, CFrame.new(ProjectileStartPosition, ProjectileEndPosition) * CFrame.new(0, 0, -ProjectileLength / 2) * CFrame.Angles(0, math.pi / 2, 0))
+            end
+
+            --Set the size if it has changed.
             if math.abs(ActiveProjectile.LastProjectileLength - ProjectileLength) > 0.001 then
                 ProjectilePart.Size = Vector3.new(ProjectileLength, ProjectileDiameter, ProjectileDiameter)
             end
@@ -85,6 +96,13 @@ function ProjectileUpdateLoop.Update(self: ProjectileUpdateLoop): ()
         end
     end
     debug.profileend()
+
+    --Move the projectile parts.
+    if IsClient and #BulkMoveParts > 0 then
+        debug.profilebegin("ProjectileReplicationBulkMoveTo")
+        Workspace:BulkMoveTo(BulkMoveParts, BulkMoveCFrames)
+        debug.profileend()
+    end
 end
 
 --[[
