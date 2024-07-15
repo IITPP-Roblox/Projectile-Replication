@@ -91,6 +91,8 @@ function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number
         ProjectilePart = Instance.new("Part")
         ProjectilePart.CastShadow = false
         ProjectilePart.CanCollide = false
+        ProjectilePart.CanTouch = false
+        ProjectilePart.CanQuery = false
         ProjectilePart.Anchored = true
         ProjectilePart.Shape = Enum.PartType.Cylinder
         ProjectilePart.CFrame = CFrame.new(0, math.huge, 0)
