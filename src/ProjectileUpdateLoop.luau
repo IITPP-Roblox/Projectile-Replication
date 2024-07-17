@@ -59,7 +59,7 @@ function ProjectileUpdateLoop.Update(self: ProjectileUpdateLoop): ()
             if HitPart then
                 ActiveProjectile.WasHit = true
                 ActiveProjectile.EndTime = StartTime + ((HitEndPosition - StartCFrame.Position).Magnitude / Speed)
-                Projectile.OnHitEvent:Fire(HitPart, HitEndPosition, self)
+                Projectile.OnHitEvent:Fire(HitPart, HitEndPosition, Projectile)
             end
         end
 
