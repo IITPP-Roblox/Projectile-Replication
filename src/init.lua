@@ -10,9 +10,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Projectile = require(script:WaitForChild("Projectile"))
-local JointSolver = require(script:WaitForChild("JointSolver"))
 local LocalAudio = require(script:WaitForChild("LocalAudio"))
 local LocalTween = require(script:WaitForChild("LocalTween"))
+local Appendage = require(script:WaitForChild("NexusAppendage"):WaitForChild("Appendage"))
 local Types = require(script:WaitForChild("Types"))
 local LocalWeaponSetup = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"))
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
@@ -183,31 +183,21 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3, SendTim
         local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart") :: BasePart
         local LowerTorso = Character:FindFirstChild("LowerTorso") :: BasePart
         local UpperTorso = Character:FindFirstChild("UpperTorso") :: BasePart
-        local LeftUpperArm = Character:FindFirstChild("LeftUpperArm") :: BasePart
         local RightUpperArm = Character:FindFirstChild("RightUpperArm") :: BasePart
         if not Tool or not Humanoid or not Head or not LowerTorso or not UpperTorso or not RightUpperArm or not HumanoidRootPart then return end
         local Handle = Tool:FindFirstChild("Handle") :: BasePart
         local RootRigAttachment = HumanoidRootPart:FindFirstChild("RootRigAttachment") :: Attachment
         local Root = LowerTorso:FindFirstChild("Root") :: Motor6D
         local RightShoulderRigAttachment = UpperTorso:FindFirstChild("RightShoulderRigAttachment") :: Attachment
-        local LeftShoulderRigAttachment = UpperTorso:FindFirstChild("LeftShoulderRigAttachment") :: Attachment
         local RightShoulder = RightUpperArm:FindFirstChild("RightShoulder") :: Motor6D
-        if not Handle or not RootRigAttachment or not Root or not RightShoulderRigAttachment or not LeftShoulderRigAttachment or not RightShoulder then return end
+        if not Handle or not RootRigAttachment or not Root or not RightShoulderRigAttachment or not RightShoulder then return end
         local LeftHandHold = Handle:FindFirstChild("LeftHandHold") :: Attachment
 
         --Get the left arm parts.
-        local LeftUpperLimbStartAttachment, LeftUpperLimbJointAttachment = nil, nil
-        local LeftLowerLimbJointAttachment, LeftLowerLimbEndAttachment = nil, nil
-        local LeftLimbEndAttachment, LeftLimbHoldAttachment = nil, nil
+        local LeftArmAppendage = nil
         if LeftHandHold then
-            local LeftLowerArm = Character:FindFirstChild("LeftLowerArm")
-            local LeftHand = Character:FindFirstChild("LeftHand")
-            LeftUpperLimbStartAttachment = LeftUpperArm and LeftUpperArm:FindFirstChild("LeftShoulderRigAttachment") :: Attachment
-            LeftUpperLimbJointAttachment = LeftUpperArm and LeftUpperArm:FindFirstChild("LeftElbowRigAttachment") :: Attachment
-            LeftLowerLimbJointAttachment = LeftLowerArm and LeftLowerArm:FindFirstChild("LeftElbowRigAttachment") :: Attachment
-            LeftLowerLimbEndAttachment = LeftLowerArm and LeftLowerArm:FindFirstChild("LeftWristRigAttachment") :: Attachment
-            LeftLimbEndAttachment = LeftHand and LeftHand:FindFirstChild("LeftWristRigAttachment") :: Attachment
-            LeftLimbHoldAttachment = LeftHand and LeftHand:FindFirstChild("LeftGripAttachment") :: Attachment
+            LeftArmAppendage = Appendage.FromPreset("LeftArm", Character)
+            LeftArmAppendage:SetTargetAttachment(LeftHandHold)
         end
 
         --Get the configuration.
@@ -268,31 +258,9 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3, SendTim
                 RightShoulder.C0 = RightShoulderRigAttachment.CFrame * ShouldAimCFrame * CharacterRotation
             end
 
-            if LeftHandHold or ToolConfiguration.AnimationJoints then
-                --Solve the left arm.
-                local LeftArmJoints = {}
-                if LeftHandHold and LeftUpperLimbStartAttachment and LeftUpperLimbJointAttachment and LeftLowerLimbJointAttachment and LeftLowerLimbEndAttachment and LeftLimbEndAttachment and LeftLimbHoldAttachment then
-                    local LeftUpperArmCFrame, LeftLowerArmCFrame, LeftHandCFrame = JointSolver(LeftShoulderRigAttachment.WorldCFrame, LeftHandHold.WorldCFrame, LeftUpperLimbStartAttachment, LeftUpperLimbJointAttachment, LeftLowerLimbJointAttachment, LeftLowerLimbEndAttachment, LeftLimbEndAttachment, LeftLimbHoldAttachment)
-                    LeftArmJoints = {
-                        LeftUpperArm = {
-                            LeftShoulder = LeftShoulderRigAttachment.WorldCFrame:Inverse() * (LeftUpperArmCFrame * LeftUpperLimbStartAttachment.CFrame),
-                        },
-                        LeftLowerArm = {
-                            LeftElbow = (LeftUpperArmCFrame * LeftUpperLimbJointAttachment.CFrame):Inverse() * (LeftLowerArmCFrame * LeftLowerLimbJointAttachment.CFrame),
-                        },
-                        LeftHand = {
-                            LeftWrist = (LeftLowerArmCFrame * LeftLowerLimbEndAttachment.CFrame):Inverse() * (LeftHandCFrame * LeftLimbEndAttachment.CFrame),
-                        },
-                    }
-                end
-
-                --Set the joints.
-                if ToolConfiguration.AnimationJoints then
-                    for PartName, PartJoints in ToolConfiguration.AnimationJoints do
-                        UpdateJoint(PartName, PartJoints)
-                    end
-                end
-                for PartName, PartJoints in pairs(LeftArmJoints) do
+            --Set the joints.
+            if ToolConfiguration.AnimationJoints then
+                for PartName, PartJoints in ToolConfiguration.AnimationJoints do
                     UpdateJoint(PartName, PartJoints)
                 end
             end
@@ -315,6 +283,11 @@ function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3, SendTim
             --Reset the root and shoulder.
             RightShoulder.C0 = RightShoulderRigAttachment.CFrame
             Root.C0 = RootRigAttachment.CFrame
+
+            --Reset the left arm.
+            if LeftArmAppendage then
+                LeftArmAppendage:Destroy()
+            end
 
             --Clear the BodyGyro.
             if BodyGyro then
