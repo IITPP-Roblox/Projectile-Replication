@@ -4,3 +4,6 @@
 [submodule "module/LocalTween"]
 	path = module/LocalTween
 	url = https://github.com/IITPP-Roblox/LocalTween.git
+[submodule "module/Nexus-Appendage"]
+	path = module/Nexus-Appendage
+	url = https://github.com/TheNexusAvenger/Nexus-Appendage.git
