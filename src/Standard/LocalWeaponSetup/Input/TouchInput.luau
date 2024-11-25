@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Handles inputs for touch displays.
---]]
+--Handles inputs for touch displays.
 --!strict
 
 local Workspace = game:GetService("Workspace")
@@ -22,11 +18,8 @@ export type TouchInputDisplay = {
     Destroy: (self: TouchInputDisplay) -> (),
 }
 export type TouchInput = {
-    CreateDisplay: () -> (TouchInputDisplay),
-
     Display: TouchInputDisplay?,
-    new: () -> (TouchInput)
-} & BaseInput.BaseInput
+} & typeof(setmetatable({}, TouchInput)) & BaseInput.BaseInput
 
 
 
@@ -174,8 +167,7 @@ end
 Creates a touch input.
 --]]
 function TouchInput.new(): TouchInput
-    local self = (BaseInput.new() :: any) :: TouchInput
-    setmetatable(self, TouchInput)
+    local self = setmetatable(BaseInput.new(), TouchInput) :: TouchInput
 
     --Create the user interface for mobile.
     if UserInputService.TouchEnabled then
@@ -227,14 +219,14 @@ end
 --[[
 Returns if the input is a priority for the combined input.
 --]]
-function TouchInput:IsPriority(): boolean
+function TouchInput.IsPriority(self: TouchInput): boolean
     return UserInputService:GetLastInputType() == Enum.UserInputType.Touch
 end
 
 --[[
 Returns the aiming location for the input in screen space.
 --]]
-function TouchInput:GetTargetScreenSpace(): Vector2
+function TouchInput.GetTargetScreenSpace(self: TouchInput): Vector2
     local Camera = Workspace.CurrentCamera
     local ScreenSize = Camera.ViewportSize - GuiService:GetGuiInset()
     local Character = Players.LocalPlayer.Character :: Model
@@ -250,10 +242,10 @@ end
 --[[
 Destroys the input.
 --]]
-function TouchInput:Destroy(): ()
+function TouchInput.Destroy(self: TouchInput): ()
     BaseInput.Destroy(self)
 
-    local Display = (self :: TouchInput).Display
+    local Display = self.Display
     if Display then
         Display:Destroy()
     end
@@ -261,4 +253,4 @@ end
 
 
 
-return (TouchInput :: any) :: TouchInput
+return TouchInput

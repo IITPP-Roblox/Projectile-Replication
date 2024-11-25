@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Types used by the system.
---]]
+--Types used by the system.
 --!strict
 
 export type ProjectileAppearance = {
@@ -29,8 +25,6 @@ export type Projectile = {
     OnHitEvent: BindableEvent,
     Source: Instance?,
     RayCast: (Vector3, Vector3, {Instance}?) -> (BasePart?, Vector3),
-    new: (ProjectileAppearance) -> Projectile,
-    Fire: (Projectile, CFrame, number, number, {Instance}?) -> (),
     Destroy: (Projectile) -> (),
 }
 

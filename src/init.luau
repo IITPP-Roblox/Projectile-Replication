@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Handles replication of projectiles.
---]]
+--Handles replication of projectiles.
 --!strict
 
 local Players = game:GetService("Players")
@@ -18,19 +14,13 @@ local LocalWeaponSetup = require(script:WaitForChild("Standard"):WaitForChild("L
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
 
 local ProjectileReplication = {}
+ProjectileReplication.SetUpCalled = false
 local UpdateAimFunctions = {}
 setmetatable(UpdateAimFunctions, {__mode="k"})
 local LastAimUpdateTimes = {}
 setmetatable(LastAimUpdateTimes, {__mode="k"})
 
-export type ProjectileReplication = {
-    SetUpCalled: boolean,
-    
-    Fire: (self: ProjectileReplication, StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?) -> (),
-    Reload: (self: ProjectileReplication, Player: Player?, Tool: Tool?) -> (),
-    Aim: (self: ProjectileReplication, Player: Player, AimPosition: Vector3) -> (),
-    SetUp: (self: ProjectileReplication) -> (),
-}
+export type ProjectileReplication = typeof(ProjectileReplication)
 
 
 
@@ -61,7 +51,7 @@ end
 --[[
 Fires a projectile.
 --]]
-function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?): ()
+function ProjectileReplication.Fire(self: ProjectileReplication, StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?): ()
     --Set the source.
     if RunService:IsClient() and not Source then
         Source = Players.LocalPlayer.Character
@@ -117,12 +107,12 @@ function ProjectileReplication:Fire(StartCFrame: CFrame, FirePart: BasePart, Pre
     ProjectileObject:Fire(StartCFrame, Preset.Speed, Preset.LifetimeSeconds, {Source or Players.LocalPlayer.Character})
     if RunService:IsClient() and Preset.OnFireClient then
         task.spawn(function()
-            Preset.OnFireClient(ProjectileObject)
+            Preset.OnFireClient(ProjectileObject :: any)
         end)
     end
     if not RunService:IsClient() and Preset.OnFireServer then
         task.spawn(function()
-            Preset.OnFireServer(ProjectileObject)
+            Preset.OnFireServer(ProjectileObject :: any)
         end)
     end
 end
@@ -130,7 +120,7 @@ end
 --[[
 Reloads the current tool of the given player.
 --]]
-function ProjectileReplication:Reload(Player: Player?, Tool: Tool?): ()
+function ProjectileReplication.Reload(self: ProjectileReplication, Player: Player?, Tool: Tool?): ()
     if RunService:IsClient() then
         ReloadEvent:FireServer(Tool)
     elseif Player then
@@ -169,7 +159,7 @@ end
 --[[
 Sets the aim of a player to a given CFrame.
 --]]
-function ProjectileReplication:Aim(Player: Player, AimPosition: Vector3, SendTime: number?): ()
+function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, AimPosition: Vector3, SendTime: number?): ()
     SendTime = SendTime or tick()
 
     --Get or create the update function.
@@ -316,7 +306,7 @@ end
 --[[
 Sets up the replication.
 --]]
-function ProjectileReplication:SetUp(): ()
+function ProjectileReplication.SetUp(self: ProjectileReplication): ()
     --Return if setup was called.
     if self.SetUpCalled then return end
     self.SetUpCalled = true
@@ -395,4 +385,4 @@ end
 
 
 
-return (ProjectileReplication :: any) :: ProjectileReplication
+return ProjectileReplication

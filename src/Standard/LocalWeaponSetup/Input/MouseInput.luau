@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Handles inputs for a keyboard and mouse.
---]]
+--Handles inputs for a keyboard and mouse.
 --!strict
 
 local UserInputService = game:GetService("UserInputService")
@@ -13,9 +9,7 @@ local MouseInput = {}
 MouseInput.__index = MouseInput
 setmetatable(MouseInput, BaseInput)
 
-export type MouseInput = {
-    new: () -> (MouseInput)
-} & BaseInput.BaseInput
+export type MouseInput = typeof(setmetatable({}, MouseInput)) & BaseInput.BaseInput
 
 
 
@@ -23,8 +17,7 @@ export type MouseInput = {
 Creates a mouse input.
 --]]
 function MouseInput.new(): MouseInput
-    local self = (BaseInput.new() :: any) :: MouseInput
-    setmetatable(self, MouseInput)
+    local self = setmetatable(BaseInput.new(), MouseInput) :: MouseInput
     
     --Connect reloading.
     self:ConnectReloadButton(Enum.KeyCode.R)
@@ -44,4 +37,4 @@ end
 
 
 
-return (MouseInput :: any) :: MouseInput
+return MouseInput

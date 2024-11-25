@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Sets up the ProjectileReplicattion module.
---]]
+--Sets up the ProjectileReplicattion module.
 --!strict
 
 require(game:GetService("ReplicatedStorage"):WaitForChild("ProjectileReplication")):SetUp()

@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Prepares standard weapons.
---]]
+--Prepares standard weapons.
 --!strict
 
 local LocalWeaponScript = script:WaitForChild("LocalWeapon")

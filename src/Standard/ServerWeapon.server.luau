@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Handles the weapon on the server.
---]]
+--Handles the weapon on the server.
 --!strict
 
 local TweenService = game:GetService("TweenService")

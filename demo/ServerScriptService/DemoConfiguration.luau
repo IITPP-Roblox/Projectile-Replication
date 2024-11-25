@@ -1,9 +1,5 @@
---[[
-TheNexusAvenger
-
-Configuration for the gun.
-This should be the only script that is modified for an individual gun.
---]]
+--Configuration for the gun.
+--This should be the only script that is modified for an individual gun.
 --!strict
 
 return {
