@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Manages the weapon state for firing and reloading.
---]]
+--Manages the weapon state for firing and reloading.
 --!strict
 
 local Players = game:GetService("Players")
@@ -28,16 +24,7 @@ export type WeaponState = {
     RemainingRoundsValue: IntValue,
     ChargedPercentValue: NumberValue?,
     ProjectileReplication: any,
-
-    new: (Tool: Instance) -> (WeaponState),
-    GetAim: (self: WeaponState) -> (Vector3),
-    SetInput: (self: WeaponState, Input: BaseInput.BaseInput?) -> (),
-    AddVibrationMotor: (self: WeaponState, Motor: VibrationMotor.VibrationMotor) -> (),
-    Reload: (self: WeaponState) -> (),
-    TryFire: (self: WeaponState) -> (),
-    Fire: (self: WeaponState) -> (),
-    StopFiring: (self: WeaponState) -> (),
-}
+} & typeof(setmetatable({}, WeaponState))
 
 
 
@@ -47,7 +34,7 @@ Creates a weapon state.
 function WeaponState.new(Tool: Instance): WeaponState
     local Handle = Tool:WaitForChild("Handle") :: BasePart
     local State = Tool:WaitForChild("State")
-    return (setmetatable({
+    return setmetatable({
         Firing = false,
         LastFireTime = 0,
         Motors = {},
@@ -55,18 +42,18 @@ function WeaponState.new(Tool: Instance): WeaponState
         Tool = Tool,
         Handle = Handle,
         StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment,
-        ReloadingValue = State:WaitForChild("Reloading"),
-        RemainingRoundsValue = State:WaitForChild("RemainingRounds"),
-        ChargedPercentValue = State:FindFirstChild("ChargedPercent") :: NumberValue,
+        ReloadingValue = State:WaitForChild("Reloading") :: BoolValue,
+        RemainingRoundsValue = State:WaitForChild("RemainingRounds") :: IntValue,
+        ChargedPercentValue = State:FindFirstChild("ChargedPercent") :: any, --Casting to NumberValue? does not work.
         --ProjectileReplication is stored internally to prevent a cyclic require.
         ProjectileReplication = require(script.Parent.Parent.Parent) :: any,
-    }, WeaponState) :: any) :: WeaponState
+    }, WeaponState) :: WeaponState
 end
 
 --[[
 Returns the current aim position.
 --]]
-function WeaponState:GetAim(): Vector3
+function WeaponState.GetAim(self: WeaponState): Vector3
     if UserInputService.VREnabled then
         return ((self.StartAttachment :: Attachment).WorldCFrame * CFrame.new(0, 0, -10000)).Position
     end
@@ -79,21 +66,21 @@ end
 --[[
 Sets the input for the weapon state.
 --]]
-function WeaponState:SetInput(Input: BaseInput.BaseInput?): ()
+function WeaponState.SetInput(self: WeaponState, Input: BaseInput.BaseInput?): ()
     self.Input = Input
 end
 
 --[[
 Adds a vibration motor to the state.
 --]]
-function WeaponState:AddVibrationMotor(Motor: VibrationMotor.VibrationMotor): ()
+function WeaponState.AddVibrationMotor(self: WeaponState, Motor: VibrationMotor.VibrationMotor): ()
     table.insert(self.Motors, Motor)
 end
 
 --[[
 Tries to reload the weapon.
 --]]
-function WeaponState:Reload(): ()
+function WeaponState.Reload(self: WeaponState): ()
     if self.ReloadingValue.Value then return end
     self.ReloadingValue.Value = true
     self.ProjectileReplication:Reload(Players.LocalPlayer, self.Tool)
@@ -102,7 +89,7 @@ end
 --[[
 Tries to fire the weapon once.
 --]]
-function WeaponState:TryFire(): ()
+function WeaponState.TryFire(self: WeaponState): ()
     --Return if there are no rounds or the last fire was too recent.
     if self.ReloadingValue.Value then return end
     if self.RemainingRoundsValue.Value <= 0 then
@@ -126,7 +113,7 @@ end
 Fires the weapon.
 For automatic weapons, this method will run until the firing is stopped.
 --]]
-function WeaponState:Fire(): ()
+function WeaponState.Fire(self: WeaponState): ()
     self.Firing = true
     if self.Configuration.FullAutomatic then
         if self.ChargedPercentValue then
@@ -147,10 +134,10 @@ end
 --[[
 Stops firing the weapon, if it is being fired.
 --]]
-function WeaponState:StopFiring(): ()
+function WeaponState.StopFiring(self: WeaponState): ()
     self.Firing = false
 end
 
 
 
-return (WeaponState :: any) :: WeaponState
+return WeaponState

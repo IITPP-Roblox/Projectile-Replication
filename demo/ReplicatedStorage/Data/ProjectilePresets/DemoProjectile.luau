@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Demo projectile preset.
---]]
+--Demo projectile preset.
 --!strict
 
 return {
@@ -19,9 +15,9 @@ return {
     DefaultFireSound = "Demo.Fire",
     DefaultReloadSound = "Demo.Reload",
     OnHitClient = function(Part: BasePart, Position: Vector3, Projectile: any)
-        print("Projectile hit "..tostring(Part).." at position "..tostring(Position).." using projectile "..tostring(Projectile).." on the client")
+        print(`Projectile hit {Part} at position {Position} using projectile {Projectile} on the client`)
     end,
     OnHitServer = function(Part: BasePart, Position: Vector3, Projectile: any)
-        print("Projectile hit "..tostring(Part).." at position "..tostring(Position).." using projectile "..tostring(Projectile).." on the server")
+        print(`Projectile hit {Part} at position {Position} using projectile {Projectile} on the server`)
     end,
 }

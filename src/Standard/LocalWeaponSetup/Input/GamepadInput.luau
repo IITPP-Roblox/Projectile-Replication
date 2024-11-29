@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Handles inputs for gaempads.
---]]
+--Handles inputs for gaempads.
 --!strict
 
 local START_FIRE_THRESHOLD = 0.7
@@ -16,9 +12,7 @@ local GamepadInput = {}
 GamepadInput.__index = GamepadInput
 setmetatable(GamepadInput, BaseInput)
 
-export type GamepadInput = {
-    new: (FireButton: Enum.KeyCode) -> (GamepadInput)
-} & BaseInput.BaseInput
+export type GamepadInput = typeof(setmetatable({}, GamepadInput)) & BaseInput.BaseInput
 
 
 
@@ -26,8 +20,7 @@ export type GamepadInput = {
 Creates a gamepad input.
 --]]
 function GamepadInput.new(FireButton: Enum.KeyCode): GamepadInput
-    local self = (BaseInput.new() :: any) :: GamepadInput
-    setmetatable(self, GamepadInput)
+    local self = setmetatable(BaseInput.new(), GamepadInput) :: GamepadInput
 
     --Connect firing events.
     local FireActive = false
@@ -46,4 +39,4 @@ end
 
 
 
-return (GamepadInput :: any) :: GamepadInput
+return GamepadInput

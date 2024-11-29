@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Base input class.
---]]
+--Base input class.
 --!strict
 
 local Workspace = game:GetService("Workspace")
@@ -20,15 +16,8 @@ export type BaseInput = {
     StartFire: Event.Event<>,
     EndFire: Event.Event<>,
     Reload: Event.Event<>,
-
     Events: {RBXScriptConnection},
-    new: () -> (BaseInput),
-    IsPriority: (self: BaseInput) -> (boolean),
-    ConnectReloadButton: (self: BaseInput, Button: Enum.KeyCode) -> (),
-    GetTargetScreenSpace: (self: BaseInput) -> (Vector2),
-    GetTargetWorldSpace: (self: BaseInput) -> (Vector3),
-    Destroy: (self: BaseInput) -> (),
-}
+} & typeof(setmetatable({}, BaseInput))
 
 
 
@@ -36,25 +25,25 @@ export type BaseInput = {
 Creates a base input.
 --]]
 function BaseInput.new(): BaseInput
-    return (setmetatable({
+    return setmetatable({
         StartFire = Event.new(),
         EndFire = Event.new(),
         Reload = Event.new(),
         Events = {},
-    }, BaseInput) :: any) :: BaseInput
+    }, BaseInput) :: BaseInput
 end
 
 --[[
 Returns if the input is a priority for the combined input.
 --]]
-function BaseInput:IsPriority(): boolean
+function BaseInput.IsPriority(self: BaseInput): boolean
     return false
 end
 
 --[[
 Connects a button press to invoke the reload event.
 --]]
-function BaseInput:ConnectReloadButton(Button: Enum.KeyCode): ()
+function BaseInput.ConnectReloadButton(self: BaseInput, Button: Enum.KeyCode): ()
     UserInputService.InputBegan:Connect(function(Input, Processed)
         if Processed then return end
         if Input.KeyCode ~= Button then return end
@@ -65,14 +54,14 @@ end
 --[[
 Returns the aiming location for the input in screen space.
 --]]
-function BaseInput:GetTargetScreenSpace(): Vector2
+function BaseInput.GetTargetScreenSpace(self: BaseInput): Vector2
     return UserInputService:GetMouseLocation() - GuiService:GetGuiInset()
 end
 
 --[[
 Returns the aiming location for the input in world space.
 --]]
-function BaseInput:GetTargetWorldSpace(): Vector3
+function BaseInput.GetTargetWorldSpace(self: BaseInput): Vector3
     local Camera = Workspace.CurrentCamera
     local MousePosition = self:GetTargetScreenSpace()
     local CameraRay = Camera:ScreenPointToRay(MousePosition.X, MousePosition.Y, 10000)
@@ -83,7 +72,7 @@ end
 --[[
 Destroys the input.
 --]]
-function BaseInput:Destroy(): ()
+function BaseInput.Destroy(self: BaseInput): ()
     for _, Event in self.Events do
         Event:Disconnect()
     end
@@ -96,4 +85,4 @@ end
 
 
 
-return (BaseInput :: any) :: BaseInput
+return BaseInput

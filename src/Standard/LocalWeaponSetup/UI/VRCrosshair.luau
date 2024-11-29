@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Weapon crosshair (ammo display) used in VR.
---]]
+--Weapon crosshair (ammo display) used in VR.
 --!strict
 
 local BaseCrosshair = require(script.Parent:WaitForChild("BaseCrosshair"))
@@ -11,9 +7,7 @@ local VRCrosshair = {}
 VRCrosshair.__index = VRCrosshair
 setmetatable(VRCrosshair, BaseCrosshair)
 
-export type VRCrosshair = {
-    new: (Attachment: Attachment, Offset: Vector3?) -> (VRCrosshair),
-} & BaseCrosshair.BaseCrosshair
+export type VRCrosshair = typeof(setmetatable({}, VRCrosshair)) & BaseCrosshair.BaseCrosshair
 
 
 
@@ -21,7 +15,7 @@ export type VRCrosshair = {
 Creates a VR crosshair.
 --]]
 function VRCrosshair.new(Attachment: Attachment, Offset: Vector3?): VRCrosshair
-    local self = (setmetatable(BaseCrosshair.new(), VRCrosshair) :: any) :: VRCrosshair
+    local self = setmetatable(BaseCrosshair.new(), VRCrosshair) :: VRCrosshair
 
     --Create the ammo display.
     local CrosshairGui = Instance.new("BillboardGui")
@@ -67,4 +61,4 @@ end
 
 
 
-return (VRCrosshair :: any) :: VRCrosshair
+return VRCrosshair

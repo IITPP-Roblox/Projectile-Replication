@@ -1,9 +1,5 @@
---[[
-TheNexusAvenger
-
-Sets up a weapon on the client.
-Moved out of LocalWeapon to make it safe for destroying.
---]]
+--Sets up a weapon on the client.
+--Moved out of LocalWeapon to make it safe for destroying.
 --!strict
 
 local Players = game:GetService("Players")
@@ -23,12 +19,13 @@ local Types = require(script.Parent.Parent:WaitForChild("Types"))
 
 local LocalWeaponSetup = {}
 
+export type LocalWeaponSetup = typeof(LocalWeaponSetup)
 
 
 --[[
 Sets up a tool.
 --]]
-function LocalWeaponSetup:SetupTool(Tool: Tool): ()
+function LocalWeaponSetup.SetupTool(self: LocalWeaponSetup, Tool: Tool): ()
     local ProjectileReplication = require(script.Parent.Parent) :: any
     
     local Configuration = require(Tool:WaitForChild("Configuration")) :: Types.StandardConfiguration
@@ -104,7 +101,7 @@ Binds the tool setup to a different script.
 Calls to SetupTool will not properly clear when destroyed. This ensures that SetupTool
 is actually called in a different script that can perform the cleanup.
 --]]
-function LocalWeaponSetup:Bind(): ()
+function LocalWeaponSetup.Bind(self: LocalWeaponSetup): ()
     local OriginalSetupTool = self.SetupTool
     local BindableFunction = Instance.new("BindableFunction")
     BindableFunction.OnInvoke = function(...)

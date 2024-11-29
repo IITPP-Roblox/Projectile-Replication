@@ -1,9 +1,5 @@
---[[
-TheNexusAvenger
-
-Sets the weapon on the client.
-LocalWeaponSetup is used to properly handle being abruptly cleared.
---]]
+--Sets the weapon on the client.
+--LocalWeaponSetup is used to properly handle being abruptly cleared.
 --!strict
 
 local Tool = script.Parent

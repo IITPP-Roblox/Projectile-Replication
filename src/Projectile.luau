@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Controls the logic for projectiles.
---]]
+--Controls the logic for projectiles.
 --!strict
 
 local Workspace = game:GetService("Workspace")
@@ -12,6 +8,15 @@ local ProjctileTypes = require(script.Parent:WaitForChild("Types"))
 
 local Projectile = {}
 Projectile.__index = Projectile
+
+export type Projectile = {
+    Appearance: ProjctileTypes.ProjectileAppearance?,
+    ObjectsToDestroy: {Instance},
+    OnHitEvent: BindableEvent,
+    OnHit: RBXScriptSignal,
+    ProjectilePart: BasePart?,
+    Source: Instance?,
+} & typeof(setmetatable({}, Projectile))
 
 
 
@@ -61,27 +66,26 @@ end
 --[[
 Creates a projectile.
 --]]
-function Projectile.new(Appearance: ProjctileTypes.ProjectileAppearance?): ProjctileTypes.Projectile
+function Projectile.new(Appearance: ProjctileTypes.ProjectileAppearance?): Projectile
     --Create the object.
-    local ProjectileObject = {
+    local self = setmetatable({
         Appearance = Appearance,
         ObjectsToDestroy = {},
-    }
-    setmetatable(ProjectileObject, Projectile)
+    }, Projectile) :: Projectile
 
     --Create the event for the projectile.
-    ProjectileObject.OnHitEvent = Instance.new("BindableEvent")
-    ProjectileObject.OnHit = ProjectileObject.OnHitEvent.Event
-    table.insert(ProjectileObject.ObjectsToDestroy, ProjectileObject.OnHitEvent)
+    self.OnHitEvent = Instance.new("BindableEvent")
+    self.OnHit = self.OnHitEvent.Event
+    table.insert(self.ObjectsToDestroy, self.OnHitEvent)
 
     --Return the event.
-    return (ProjectileObject :: any) :: ProjctileTypes.Projectile
+    return self
 end
 
 --[[
 Fires the projectile.
 --]]
-function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number, IgnoreList: {Instance}?): ()
+function Projectile.Fire(self: Projectile, StartCFrame: CFrame, Speed: number, MaxLifetime: number, IgnoreList: {Instance}?): ()
     local NewIgnoreList = IgnoreList or {}
     table.insert(NewIgnoreList, Workspace.CurrentCamera)
 
@@ -109,7 +113,7 @@ function Projectile:Fire(StartCFrame: CFrame, Speed: number, MaxLifetime: number
 
     --Add the projectile to the loop.
     ProjectileUpdateLoop:AddProjectile({
-        Projectile = self,
+        Projectile = self :: any,
         Speed = Speed,
         StartCFrame = StartCFrame,
         MaxLifetime = MaxLifetime,
@@ -122,7 +126,7 @@ end
 --[[
 Destroys the Projectile.
 --]]
-function Projectile:Destroy(): ()
+function Projectile.Destroy(self: Projectile): ()
     for _, Object in self.ObjectsToDestroy do
         Object:Destroy()
     end

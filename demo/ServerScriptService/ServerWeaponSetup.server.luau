@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Sets up the demo weapon on the server.
---]]
+--Sets up the demo weapon on the server.
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

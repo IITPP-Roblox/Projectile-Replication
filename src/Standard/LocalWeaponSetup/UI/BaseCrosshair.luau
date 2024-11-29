@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Base class for a crosshair.
---]]
+--Base class for a crosshair.
 --!strict
 
 local BaseCrosshair = {}
@@ -12,13 +8,7 @@ export type BaseCrosshair = {
     CrosshairGui: Instance,
     AmmoText: TextLabel,
     ReloadingText: TextLabel,
-
-    new: () -> (BaseCrosshair),
-    SetAmmo: (self: BaseCrosshair, CurrentAmmo: number, MaxAmmo: number) -> (),
-    SetReloading: (self: BaseCrosshair, Reloading: boolean) -> (),
-    ConnectStandard: (self: BaseCrosshair, Tool: Tool) -> (),
-    Destroy: (self: BaseCrosshair) -> (),
-}
+} & typeof(setmetatable({}, BaseCrosshair))
 
 
 
@@ -26,27 +16,27 @@ export type BaseCrosshair = {
 Creates a mouse crosshair.
 --]]
 function BaseCrosshair.new(): BaseCrosshair
-    return (setmetatable({}, BaseCrosshair) :: any) :: BaseCrosshair
+    return setmetatable({}, BaseCrosshair) :: BaseCrosshair
 end
 
 --[[
 Sets the ammo to display.
 --]]
-function BaseCrosshair:SetAmmo(CurrentAmmo: number, MaxAmmo: number): ()
-    self.AmmoText.Text = tostring(CurrentAmmo).." / "..tostring(MaxAmmo)
+function BaseCrosshair.SetAmmo(self: BaseCrosshair, CurrentAmmo: number, MaxAmmo: number): ()
+    self.AmmoText.Text = `{CurrentAmmo} / {MaxAmmo}`
 end
 
 --[[
 Sets the reloading text visibility.
 --]]
-function BaseCrosshair:SetReloading(Reloading: boolean): ()
+function BaseCrosshair.SetReloading(self: BaseCrosshair, Reloading: boolean): ()
     self.ReloadingText.Visible = Reloading
 end
 
 --[[
 Connects a standard weapon.
 --]]
-function BaseCrosshair:ConnectStandard(Tool: Tool): ()
+function BaseCrosshair.ConnectStandard(self: BaseCrosshair,Tool: Tool): ()
     local Configuration = require(Tool:WaitForChild("Configuration")) :: any
     local State = Tool:WaitForChild("State")
     local RemainingRounds = State:WaitForChild("RemainingRounds") :: IntValue
@@ -75,10 +65,10 @@ end
 --[[
 Destroys the crosshair.
 --]]
-function BaseCrosshair:Destroy(): ()
+function BaseCrosshair.Destroy(self: BaseCrosshair): ()
     self.CrosshairGui:Destroy()
 end
 
 
 
-return (BaseCrosshair :: any) :: BaseCrosshair
+return BaseCrosshair

@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Wrapper for controlling vibration motors on gamepads.
---]]
+--Wrapper for controlling vibration motors on gamepads.
 --!strict
 
 local HapticService = game:GetService("HapticService")
@@ -15,12 +11,7 @@ export type VibrationMotor = {
     Motor: Enum.VibrationMotor,
     LastSetTime: number,
     IntensityMultiplier: number,
-
-    GetMotor: (Motor: Enum.VibrationMotor) -> (VibrationMotor),
-    new: (Motor: Enum.VibrationMotor) -> (VibrationMotor),
-    SetIntensityMultiplier: (self: VibrationMotor, Multiplier: number) -> (),
-    Activate: (self: VibrationMotor, Duration: number, Intensity: number) -> ()
-}
+} & typeof(setmetatable({}, VibrationMotor))
 
 
 
@@ -38,24 +29,24 @@ end
 Creates a vibration motor state.
 --]]
 function VibrationMotor.new(Motor: Enum.VibrationMotor): VibrationMotor
-    return (setmetatable({
+    return setmetatable({
         Motor = Motor,
         LastSetTime = 0,
         IntensityMultiplier = 1,
-    }, VibrationMotor) :: any) :: VibrationMotor
+    }, VibrationMotor) :: VibrationMotor
 end
 
 --[[
 Sets the intensity multiplier of the motor.
 --]]
-function VibrationMotor:SetIntensityMultiplier(Multiplier: number): ()
+function VibrationMotor.SetIntensityMultiplier(self: VibrationMotor, Multiplier: number): ()
     self.IntensityMultiplier = Multiplier
 end
 
 --[[
 Sets the vibration motor as active for the given period of time.
 --]]
-function VibrationMotor:Activate(Duration: number, Intensity: number): ()
+function VibrationMotor.Activate(self: VibrationMotor, Duration: number, Intensity: number): ()
     if Intensity == 0 or self.IntensityMultiplier == 0 then return end
     local CurrentTime = tick()
     self.LastSetTime = CurrentTime
@@ -69,6 +60,4 @@ end
 
 
 
-
-
-return (VibrationMotor :: any) :: VibrationMotor
+return VibrationMotor

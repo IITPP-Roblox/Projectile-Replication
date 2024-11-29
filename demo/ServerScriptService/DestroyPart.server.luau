@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Creates a part in Workspace that destroys tools.
---]]
+--Creates a part in Workspace that destroys tools.
 --!strict
 
 local DestroyPart = Instance.new("Part")

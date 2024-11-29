@@ -1,8 +1,4 @@
---[[
-TheNexusAvenger
-
-Weapon crosshair used with a mouse or other pointing devices.
---]]
+--Weapon crosshair used with a mouse or other pointing devices.
 --!strict
 
 local Players = game:GetService("Players")
@@ -16,10 +12,7 @@ setmetatable(MouseCrosshair, BaseCrosshair)
 
 export type MouseCrosshair = {
     CrossFrame: Frame,
-
-    new: () -> (MouseCrosshair),
-    MoveTo: (self: MouseCrosshair, Positon: Vector2) -> (),
-} & BaseCrosshair.BaseCrosshair
+} & typeof(setmetatable({}, MouseCrosshair)) & BaseCrosshair.BaseCrosshair
 
 
 
@@ -27,7 +20,7 @@ export type MouseCrosshair = {
 Creates a mouse crosshair.
 --]]
 function MouseCrosshair.new(): MouseCrosshair
-    local self = (setmetatable(BaseCrosshair.new(), MouseCrosshair) :: any) :: MouseCrosshair
+    local self = setmetatable(BaseCrosshair.new(), MouseCrosshair) :: MouseCrosshair
     UserInputService.MouseIconEnabled = false
 
     --Create the crosshair.
@@ -117,18 +110,18 @@ end
 --[[
 Moves the crosshair to a given screen position.
 --]]
-function MouseCrosshair:MoveTo(Positon: Vector2): ()
+function MouseCrosshair.MoveTo(self: MouseCrosshair, Positon: Vector2): ()
     self.CrossFrame.Position = UDim2.new(0, Positon.X, 0, Positon.Y)
 end
 
 --[[
 Destroys the crosshair.
 --]]
-function MouseCrosshair:Destroy(): ()
-    BaseCrosshair.Destroy(self :: MouseCrosshair)
+function MouseCrosshair.Destroy(self: MouseCrosshair): ()
+    BaseCrosshair.Destroy(self)
     UserInputService.MouseIconEnabled = true
 end
 
 
 
-return (MouseCrosshair :: any) :: MouseCrosshair
+return MouseCrosshair
