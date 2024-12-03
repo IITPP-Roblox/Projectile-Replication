@@ -181,22 +181,20 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
         local RightShoulderRigAttachment = UpperTorso:FindFirstChild("RightShoulderRigAttachment") :: Attachment
         local RightShoulder = RightUpperArm:FindFirstChild("RightShoulder") :: Motor6D
         if not Handle or not RootRigAttachment or not Root or not RightShoulderRigAttachment or not RightShoulder then return end
-        local LeftHandHold = Handle:FindFirstChild("LeftHandHold") :: Attachment
+
+        --Get the configuration.
+        local ToolConfigurationModule = Tool:FindFirstChild("Configuration")
+        if not ToolConfigurationModule then return end
+        local ToolConfiguration = require(ToolConfigurationModule) :: Types.StandardConfiguration
+        local CharacterRotation = ToolConfiguration.AimRotationOffset or CFrame.new()
 
         --Get the left arm parts.
+        local LeftHandHold = Handle:FindFirstChild("LeftHandHold") :: Attachment
         local LeftArmAppendage = nil
         if LeftHandHold then
             LeftArmAppendage = Appendage.FromPreset("LeftArm", Character)
             LeftArmAppendage:SetTargetAttachment(LeftHandHold)
         end
-
-        --Get the configuration.
-        local ToolConfigurationModule = Tool:FindFirstChild("Configuration")
-        local ToolConfiguration = nil
-        if ToolConfigurationModule then
-            ToolConfiguration = require(ToolConfigurationModule) :: Types.StandardConfiguration
-        end
-        local CharacterRotation = ToolConfiguration.AimRotationOffset or CFrame.new()
 
         --Create the BodyGyro if the player is the local player.
         local BodyGyro, HumanoidChangedEvent = nil, nil
