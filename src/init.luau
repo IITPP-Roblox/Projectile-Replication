@@ -17,6 +17,7 @@ local LocalWeaponSetup = require(script:WaitForChild("Standard"):WaitForChild("L
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
 
 local ProjectileReplication = {}
+ProjectileReplication.QueuedProjectiles = {} :: {QueuedProjectileEntry}
 ProjectileReplication.LastLocalAimPosition = nil :: Vector3?
 ProjectileReplication.SetUpCalled = false
 local UpdateAimFunctions = {}
@@ -24,6 +25,13 @@ setmetatable(UpdateAimFunctions, {__mode="k"})
 local LastAimUpdateTimes = {}
 setmetatable(LastAimUpdateTimes, {__mode="k"})
 
+type QueuedProjectileEntry = {
+    SourcePlayer: Player?,
+    StartCFrame: CFrame,
+    Source: Model,
+    FirePart: BasePart,
+    PresetName: string
+}
 export type ProjectileReplication = typeof(ProjectileReplication)
 
 
@@ -95,12 +103,13 @@ function ProjectileReplication.Fire(self: ProjectileReplication, StartCFrame: CF
         if RunService:IsClient() then
             FireProjectileEvent:FireServer(StartCFrame)
         else
-            local FiringPlayer = Players:GetPlayerFromCharacter(Source)
-            for _, Player in Players:GetPlayers() do
-                if FiringPlayer ~= Player then
-                    FireProjectileEvent:FireClient(Player, StartCFrame, Source, FirePart, PresetName)
-                end
-            end
+            table.insert(self.QueuedProjectiles, {
+                SourcePlayer = Players:GetPlayerFromCharacter(Source),
+                StartCFrame = StartCFrame,
+                Source = Source :: Model,
+                FirePart = FirePart,
+                PresetName = PresetName,
+            })
         end
     end
 
@@ -332,8 +341,11 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
         end)
 
         --Connect projectiles being fired.
-        FireProjectileEvent.OnClientEvent:Connect(function(StartCFrame: CFrame, Source: Model, FirePart: BasePart, PresetName: string)
-            self:Fire(StartCFrame, FirePart, PresetName, Source, true)
+        FireProjectileEvent.OnClientEvent:Connect(function(QueuedProjectiles: {QueuedProjectileEntry})
+            for _, QueuedProjectile in QueuedProjectiles do
+                if QueuedProjectile.SourcePlayer == Players.LocalPlayer then continue end
+                self:Fire(QueuedProjectile.StartCFrame, QueuedProjectile.FirePart, QueuedProjectile.PresetName, QueuedProjectile.Source, true)
+            end
         end)
 
         --Connect the aim updating.
@@ -409,6 +421,15 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
             --Store the aim position to be repliaced later.
             --Instance references can't be stored due to being converted to strings.
             QueuedPlayerAimPositions[Player.UserId] = AimPosition
+        end)
+
+        --Replicate the projectiles.
+        --To reduce network load, projectiles are sent in bulk, but done more frequently then aiming.
+        RunService.Heartbeat:Connect(function()
+            local CurrentQueuedProjectiles = self.QueuedProjectiles
+            if #CurrentQueuedProjectiles == 0 then return end
+            self.QueuedProjectiles = {}
+            FireProjectileEvent:FireAllClients(CurrentQueuedProjectiles)
         end)
 
         --Replicate the aiming.
