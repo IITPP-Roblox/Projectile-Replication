@@ -14,6 +14,7 @@ local LocalWeaponSetup = require(script:WaitForChild("Standard"):WaitForChild("L
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
 
 local ProjectileReplication = {}
+ProjectileReplication.LastLocalAimPosition = nil :: Vector3?
 ProjectileReplication.SetUpCalled = false
 local UpdateAimFunctions = {}
 setmetatable(UpdateAimFunctions, {__mode="k"})
@@ -296,9 +297,9 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
     if not UpdateAimFunctions[Character] then return end
     UpdateAimFunctions[Character](AimPosition)
 
-    --Replicate the aim.
+    --Prepare to replicate the aim..
     if Player ~= Players.LocalPlayer then return end
-    UpdateAimEvent:FireServer(AimPosition, SendTime)
+    self.LastLocalAimPosition = AimPosition
 end
 
 --[[
@@ -322,6 +323,17 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
         --Connect the aim updating.
         UpdateAimEvent.OnClientEvent:Connect(function(Player: Player, AimPosition: Vector3, SendTime: number)
             self:Aim(Player, AimPosition, SendTime)
+        end)
+
+        --Replicate aiming every 30hz.
+        task.spawn(function()
+            while true do
+                if self.LastLocalAimPosition then
+                    UpdateAimEvent:FireServer(self.LastLocalAimPosition, tick())
+                    self.LastLocalAimPosition = nil
+                end
+                task.wait(1 / 30)
+            end
         end)
     else
         --Connect requests for projectiles being fired.
