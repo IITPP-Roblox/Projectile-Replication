@@ -197,7 +197,7 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
 
         --Get the configuration.
         local ToolConfigurationModule = Tool:FindFirstChild("Configuration")
-        if not ToolConfigurationModule then return end
+        if not ToolConfigurationModule or not ToolConfigurationModule:IsA("ModuleScript") then return end
         local ToolConfiguration = require(ToolConfigurationModule) :: Types.StandardConfiguration
         local CharacterRotation = ToolConfiguration.AimRotationOffset or CFrame.new()
 
