@@ -1,6 +1,9 @@
 --Handles replication of projectiles.
 --!strict
 
+local BYTES_PER_AIM_POSITION = 20 --8 bytes for user id + 3 * 4 bytes for position.
+local MAX_PLAYERS_PER_AIM_REQUEST = math.floor((900 - 2) / BYTES_PER_AIM_POSITION) --900 byte limit - 2 for total / 20 bytes per player
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -14,12 +17,21 @@ local LocalWeaponSetup = require(script:WaitForChild("Standard"):WaitForChild("L
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
 
 local ProjectileReplication = {}
+ProjectileReplication.QueuedProjectiles = {} :: {QueuedProjectileEntry}
+ProjectileReplication.LastLocalAimPosition = nil :: Vector3?
 ProjectileReplication.SetUpCalled = false
 local UpdateAimFunctions = {}
 setmetatable(UpdateAimFunctions, {__mode="k"})
 local LastAimUpdateTimes = {}
 setmetatable(LastAimUpdateTimes, {__mode="k"})
 
+type QueuedProjectileEntry = {
+    SourcePlayer: Player?,
+    StartCFrame: CFrame,
+    Source: Model,
+    FirePart: BasePart,
+    PresetName: string
+}
 export type ProjectileReplication = typeof(ProjectileReplication)
 
 
@@ -91,12 +103,13 @@ function ProjectileReplication.Fire(self: ProjectileReplication, StartCFrame: CF
         if RunService:IsClient() then
             FireProjectileEvent:FireServer(StartCFrame)
         else
-            local FiringPlayer = Players:GetPlayerFromCharacter(Source)
-            for _, Player in Players:GetPlayers() do
-                if FiringPlayer ~= Player then
-                    FireProjectileEvent:FireClient(Player, StartCFrame, Source, FirePart, PresetName)
-                end
-            end
+            table.insert(self.QueuedProjectiles, {
+                SourcePlayer = Players:GetPlayerFromCharacter(Source),
+                StartCFrame = StartCFrame,
+                Source = Source :: Model,
+                FirePart = FirePart,
+                PresetName = PresetName,
+            })
         end
     end
 
@@ -184,7 +197,7 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
 
         --Get the configuration.
         local ToolConfigurationModule = Tool:FindFirstChild("Configuration")
-        if not ToolConfigurationModule then return end
+        if not ToolConfigurationModule or not ToolConfigurationModule:IsA("ModuleScript") then return end
         local ToolConfiguration = require(ToolConfigurationModule) :: Types.StandardConfiguration
         local CharacterRotation = ToolConfiguration.AimRotationOffset or CFrame.new()
 
@@ -296,9 +309,9 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
     if not UpdateAimFunctions[Character] then return end
     UpdateAimFunctions[Character](AimPosition)
 
-    --Replicate the aim.
+    --Prepare to replicate the aim..
     if Player ~= Players.LocalPlayer then return end
-    UpdateAimEvent:FireServer(AimPosition, SendTime)
+    self.LastLocalAimPosition = AimPosition
 end
 
 --[[
@@ -314,14 +327,47 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
         LocalTween:SetUp()
         LocalWeaponSetup:Bind()
 
+        --Create the player lookup table.
+        local OtherPlayersById = {}
+        for _, Player in Players:GetPlayers() do
+            if Player == Players.LocalPlayer then continue end
+            OtherPlayersById[Player.UserId] = Player
+        end
+        Players.PlayerAdded:Connect(function(Player)
+            OtherPlayersById[Player.UserId] = Player
+        end)
+        Players.PlayerRemoving:Connect(function(Player)
+            OtherPlayersById[Player.UserId] = nil
+        end)
+
         --Connect projectiles being fired.
-        FireProjectileEvent.OnClientEvent:Connect(function(StartCFrame: CFrame, Source: Model, FirePart: BasePart, PresetName: string)
-            self:Fire(StartCFrame, FirePart, PresetName, Source, true)
+        FireProjectileEvent.OnClientEvent:Connect(function(QueuedProjectiles: {QueuedProjectileEntry})
+            for _, QueuedProjectile in QueuedProjectiles do
+                if QueuedProjectile.SourcePlayer == Players.LocalPlayer then continue end
+                self:Fire(QueuedProjectile.StartCFrame, QueuedProjectile.FirePart, QueuedProjectile.PresetName, QueuedProjectile.Source, true)
+            end
         end)
 
         --Connect the aim updating.
-        UpdateAimEvent.OnClientEvent:Connect(function(Player: Player, AimPosition: Vector3, SendTime: number)
-            self:Aim(Player, AimPosition, SendTime)
+        UpdateAimEvent.OnClientEvent:Connect(function(AimPositionsBuffer: buffer, SendTime: number)
+            local TotalPlayers = buffer.readu32(AimPositionsBuffer, 0)
+            for i = 1, TotalPlayers do
+                local StartOffset = 2 + ((i - 1) * BYTES_PER_AIM_POSITION)
+                local Player = OtherPlayersById[buffer.readf64(AimPositionsBuffer, StartOffset)]
+                if not Player then continue end
+                self:Aim(Player, Vector3.new(buffer.readf32(AimPositionsBuffer, StartOffset + 8), buffer.readf32(AimPositionsBuffer, StartOffset + 12), buffer.readf32(AimPositionsBuffer, StartOffset + 16)), SendTime)
+            end
+        end)
+
+        --Replicate aiming every 30hz.
+        task.spawn(function()
+            while true do
+                if self.LastLocalAimPosition then
+                    UpdateAimEvent:FireServer(self.LastLocalAimPosition)
+                    self.LastLocalAimPosition = nil
+                end
+                task.wait(1 / 30)
+            end
         end)
     else
         --Connect requests for projectiles being fired.
@@ -354,7 +400,7 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
             LastFireTimeValue.Value = tick()
             LastFireRemainingRoundsValue.Value = (IsCloseToLastFire and LastFireRemainingRoundsValue.Value - 1 or (ConfigurationData.ProjectilesPerRound or 1) - 1)
             RemainingRoundsValue.Value = RemainingRoundsValue.Value - 1
-            (self :: any):Fire(StartCFrame, Handle, ConfigurationData.ProjectilePreset, Character)
+            self:Fire(StartCFrame, Handle, ConfigurationData.ProjectilePreset, Character)
         end)
 
         --Connect requests for reloading.
@@ -363,7 +409,8 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
         end)
 
         --Connect requests for updating the aim of players.
-        UpdateAimEvent.OnServerEvent:Connect(function(Player: Player, AimPosition: Vector3, SendTime: number)
+        local QueuedPlayerAimPositions = {}
+        UpdateAimEvent.OnServerEvent:Connect(function(Player: Player, AimPosition: Vector3)
             --Determine if the player can aim.
             local Character = Player.Character :: Model
             if not Character then return end
@@ -371,11 +418,69 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
             local Tool = Character:FindFirstChildOfClass("Tool") :: Tool
             if not Humnanoid or Humnanoid.Health <= 0 or not Tool then return end
 
-            --Send the aim requests.
-            for _, OtherPlayer in Players:GetPlayers() do
-                if Player ~= OtherPlayer then
-                    UpdateAimEvent:FireClient(OtherPlayer, Player, AimPosition, SendTime)
+            --Store the aim position to be repliaced later.
+            --Instance references can't be stored due to being converted to strings.
+            QueuedPlayerAimPositions[Player.UserId] = AimPosition
+        end)
+
+        --Replicate the projectiles.
+        --To reduce network load, projectiles are sent in bulk, but done more frequently then aiming.
+        RunService.Heartbeat:Connect(function()
+            local CurrentQueuedProjectiles = self.QueuedProjectiles
+            if #CurrentQueuedProjectiles == 0 then return end
+            self.QueuedProjectiles = {}
+            FireProjectileEvent:FireAllClients(CurrentQueuedProjectiles)
+        end)
+
+        --Replicate the aiming.
+        --To reduce network load, aim positions are sent in bulk.
+        task.spawn(function()
+            while true do
+                --Get the current aim positions to send.
+                local CurrentQueuedPlayerAimPositions = QueuedPlayerAimPositions
+                QueuedPlayerAimPositions = {}
+
+                --Split the queued aim positions.
+                --Due to size limits in UnreliableRemoteEvents, not all data can be sent at once.
+                local LastTableTotal = 0
+                local CurrentAimPositions = {}
+                local AimPositionsSections = {CurrentAimPositions}
+                for UserId, AimPosition in CurrentQueuedPlayerAimPositions do
+                    --Prepare the next table for sections.
+                    if LastTableTotal >= MAX_PLAYERS_PER_AIM_REQUEST then
+                        CurrentAimPositions = {}
+                        table.insert(AimPositionsSections, CurrentAimPositions)
+                        LastTableTotal = 0
+                    end
+
+                    --Add the player to the current section.
+                    table.insert(CurrentAimPositions, {UserId = UserId, AimPosition = AimPosition})
+                    LastTableTotal += 1
                 end
+
+                --Convert the users into buffers and send them.
+                local SendTime = tick()
+                for _, PlayerAimPositionsSection in AimPositionsSections do
+                    if #PlayerAimPositionsSection == 0 then continue end
+
+                    --Create the buffer.
+                    local AimPositionsBuffer = buffer.create(2 + (BYTES_PER_AIM_POSITION * #PlayerAimPositionsSection))
+                    buffer.writeu32(AimPositionsBuffer, 0, #PlayerAimPositionsSection)
+                    for i, PlayerAimPosition in PlayerAimPositionsSection do
+                        local UserId, AimPosition = PlayerAimPosition.UserId, PlayerAimPosition.AimPosition
+                        local StartOffset = 2 + ((i - 1) * BYTES_PER_AIM_POSITION)
+                        buffer.writef64(AimPositionsBuffer, StartOffset, UserId)
+                        buffer.writef32(AimPositionsBuffer, StartOffset + 8, AimPosition.X)
+                        buffer.writef32(AimPositionsBuffer, StartOffset + 12, AimPosition.Y)
+                        buffer.writef32(AimPositionsBuffer, StartOffset + 16, AimPosition.Z)
+                    end
+                    
+                    --Send the buffer.
+                    UpdateAimEvent:FireAllClients(AimPositionsBuffer, SendTime)
+                end
+
+                --Wait to replicate again.
+                task.wait(1 / 30)
             end
         end)
     end
