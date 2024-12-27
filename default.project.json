@@ -10,6 +10,9 @@
         },
         "NexusAppendage": {
             "$path": "./module/Nexus-Appendage"
+        },
+        "NexusBufferedReplication": {
+            "$path": "./module/Nexus-Buffered-Replication"
         }
     }
 }
