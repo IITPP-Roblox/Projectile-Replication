@@ -58,9 +58,11 @@ function LocalWeaponSetup.SetupTool(self: LocalWeaponSetup, Tool: Tool): ()
         --Connect using the tool.
         Input.StartFire:Connect(function()
             if not Equipped then return end
+            Tool:Activate()
             WeaponState:Fire()
         end)
         Input.EndFire:Connect(function()
+            Tool:Deactivate()
             WeaponState:StopFiring()
         end)
         Input.Reload:Connect(function()
