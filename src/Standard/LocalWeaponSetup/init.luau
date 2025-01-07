@@ -21,11 +21,17 @@ local LocalWeaponSetup = {}
 
 export type LocalWeaponSetup = typeof(LocalWeaponSetup)
 
+local AlreadySetupTools = {} :: {Tool}
+
 
 --[[
 Sets up a tool.
 --]]
 function LocalWeaponSetup.SetupTool(self: LocalWeaponSetup, Tool: Tool): ()
+    if table.find(AlreadySetupTools, Tool) then
+        return
+    end
+
     local ProjectileReplication = require(script.Parent.Parent) :: any
     
     local Configuration = require(Tool:WaitForChild("Configuration")) :: Types.StandardConfiguration
@@ -96,6 +102,9 @@ function LocalWeaponSetup.SetupTool(self: LocalWeaponSetup, Tool: Tool): ()
             CurrentInput = nil
         end
     end)
+
+    -- Add tool to already setup table
+    table.insert(AlreadySetupTools, Tool)
 end
 
 --[[
