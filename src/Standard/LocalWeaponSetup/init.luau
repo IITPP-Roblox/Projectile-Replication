@@ -2,6 +2,8 @@
 --Moved out of LocalWeapon to make it safe for destroying.
 --!strict
 
+local TOOL_SET_UP_TAG = "ProjectileReplicationLoadedTool"
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -26,6 +28,9 @@ export type LocalWeaponSetup = typeof(LocalWeaponSetup)
 Sets up a tool.
 --]]
 function LocalWeaponSetup.SetupTool(self: LocalWeaponSetup, Tool: Tool): ()
+    if Tool:HasTag(TOOL_SET_UP_TAG) then return end
+    Tool:AddTag(TOOL_SET_UP_TAG)
+
     local ProjectileReplication = require(script.Parent.Parent) :: any
     
     local Configuration = require(Tool:WaitForChild("Configuration")) :: Types.StandardConfiguration
