@@ -1,0 +1,19 @@
+[package]
+name = "iitpp-roblox/projectile-replication"
+repository = "https://github.com/IITPP-Roblox/Projectile-Replication"
+description = "Manages projectiles on the client and server."
+license = "MIT"
+authors = ["IITPP-Roblox"]
+version = "1.9.0"
+
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+exclude = ["**"]
+include = ["dist", "dist/*", "src", "src/*", "default.project.json", "wally.lock", "wally.toml"]
+
+[dependencies]
+LocalAudio = "iitpp-roblox/localaudio@1.5.2"
+LocalTween = "iitpp-roblox/localtween@1.1.0"
+NexusAppendage = "thenexusavenger/nexus-appendage@1.2.0"
+NexusBufferedReplication = "thenexusavenger/nexus-buffered-replication@1.0.0"

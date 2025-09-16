@@ -5,7 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local StarterPack = game:GetService("StarterPack")
 
-local ProjectileReplication = require(ReplicatedStorage:WaitForChild("ProjectileReplication")) :: any
+local ProjectileReplication = require(ReplicatedStorage:WaitForChild("Packages"):WaitForChild("ProjectileReplication")) :: any
 ProjectileReplication:SetUp()
 
 
@@ -36,4 +36,4 @@ local Configuration = ServerScriptService:WaitForChild("DemoConfiguration")
 Configuration.Name = "Configuration"
 Configuration.Parent = Tool
 
-require(ReplicatedStorage:WaitForChild("ProjectileReplication"):WaitForChild("Standard")).CreateStandardWeapon(Tool)
+ProjectileReplication.StandardComponents.Setup.CreateStandardWeapon(Tool)

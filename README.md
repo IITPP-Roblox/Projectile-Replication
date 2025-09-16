@@ -6,12 +6,22 @@ to manage disinfectors.
 # Setup
 ## Project
 This project uses [Rojo](https://github.com/rojo-rbx/rojo) for the project
-structure. Two project files in included in the repository.
-* `default.project.json` - Structure for just the module. Intended for use
-  with `rojo build` and to be included in Rojo project structures as a
-  dependency.
+structure. Four project files in included in the repository.
+* `default.project.json` - Structure for just the module within Wally projects.
+* `default-standalone.project.json` - Structure for just the module to
+  be published as a standalone module outside of Wally.
 * `demo.project.json` - Full Roblox place that can be synced into Roblox
   studio and ran with demo models.
+* `demo-standalone.project.json` - Full Roblox place that can be synced
+  into Roblox studio and ran with demo models, but with the standalone
+  module setup.
+
+To set up the project dependencies with types:
+```bash
+wally install
+rojo sourcemap demo.project.json --output sourcemap.json
+wally-package-types --sourcemap sourcemap.json Packages/
+```
 
 ## Game
 Compared to [LocalAudio](https://github.com/IITPP-Roblox/LocalAudio) and
@@ -79,12 +89,6 @@ Thermal Plant Discord server.
   are not supported.
 * Acceleration - Projectiles follow a straight path instead of accelerating due
   to gravity or other forces.
-* Touchscreen Support - Standard weapons do not support touchscreens. This makes
-  them not work optimally on mobile platforms.
-* Fix Multi-Projectile Exploit - There is an active exploit for standard weapons
-  where the reload delay is ignored as a security check if `ProjectilePerRound`
-  is more than 1.
-* Fix Arms Bending Unnaturally - [See the GitHub issue in Nexus VR Character Model](https://github.com/TheNexusAvenger/Nexus-VR-Character-Model/issues/9).
 
 # License
 This project is available under the terms of the MIT License. See [LICENSE](LICENSE)

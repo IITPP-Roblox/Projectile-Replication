@@ -6,9 +6,9 @@
             "$className": "ReplicatedStorage",
             "$path": "./demo/ReplicatedStorage",
             "Packages": {
-                "$path": "./Packages",
+                "$className": "Folder",
                 "ProjectileReplication": {
-                    "$path": "."
+                    "$path": "./default-standalone.project.json"
                 }
             }
         },

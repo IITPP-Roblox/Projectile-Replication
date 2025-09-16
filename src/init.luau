@@ -8,16 +8,53 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Projectile = require(script:WaitForChild("Projectile"))
-local LocalAudio = require(script:WaitForChild("LocalAudio"))
-local LocalTween = require(script:WaitForChild("LocalTween"))
-local Appendage = require(script:WaitForChild("NexusAppendage"):WaitForChild("Appendage"))
-local PlayerBufferedRemoteEventReceiver = require(script:WaitForChild("NexusBufferedReplication"):WaitForChild("Receiver"):WaitForChild("PlayerBufferedRemoteEventReceiver"))
-local BufferedRemoteEventSender = require(script:WaitForChild("NexusBufferedReplication"):WaitForChild("Sender"):WaitForChild("BufferedRemoteEventSender"))
+local LocalAudio = require(script:WaitForChild("Packages"):WaitForChild("LocalAudio"))
+local LocalTween = require(script:WaitForChild("Packages"):WaitForChild("LocalTween"))
+local Appendage = require(script:WaitForChild("Packages"):WaitForChild("NexusAppendage")).Appendage
+local NexusBufferedReplication = require(script:WaitForChild("Packages"):WaitForChild("NexusBufferedReplication"))
 local Types = require(script:WaitForChild("Types"))
 local LocalWeaponSetup = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"))
 local Presets = ReplicatedStorage:WaitForChild("Data"):WaitForChild("ProjectilePresets")
 
+local Event = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("Common"):WaitForChild("Event"))
+local VibrationMotor = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("Common"):WaitForChild("VibrationMotor"))
+local BaseInput = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("Input"):WaitForChild("BaseInput"))
+local CombinedInput = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("Input"):WaitForChild("CombinedInput"))
+local GamepadInput = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("Input"):WaitForChild("GamepadInput"))
+local MouseInput = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("Input"):WaitForChild("MouseInput"))
+local TouchInput = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("Input"):WaitForChild("TouchInput"))
+local BaseCrosshair = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("UI"):WaitForChild("BaseCrosshair"))
+local MouseCrosshair = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("UI"):WaitForChild("MouseCrosshair"))
+local VRCrosshair = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("UI"):WaitForChild("VRCrosshair"))
+local WeaponState = require(script:WaitForChild("Standard"):WaitForChild("LocalWeaponSetup"):WaitForChild("WeaponState"))
+local Standard = require(script:WaitForChild("Standard"))
+
+local PlayerBufferedRemoteEventReceiver = NexusBufferedReplication.Receiver.PlayerBufferedRemoteEventReceiver
+local BufferedRemoteEventSender = NexusBufferedReplication.Sender.BufferedRemoteEventSender
+
 local ProjectileReplication = {}
+ProjectileReplication.StandardComponents = {
+    Setup = Standard,
+    Local = {
+        Common = {
+            Event = Event,
+            VibrationMotor = VibrationMotor,
+        },
+        Input = {
+            BaseInput = BaseInput,
+            CombinedInput = CombinedInput,
+            GamepadInput = GamepadInput,
+            MouseInput = MouseInput,
+            TouchInput = TouchInput,
+        },
+        UI = {
+            BaseCrosshair = BaseCrosshair,
+            MouseCrosshair = MouseCrosshair,
+            VRCrosshair = VRCrosshair,
+        },
+        WeaponState = WeaponState,
+    },
+}
 ProjectileReplication.QueuedProjectiles = {} :: {QueuedProjectileEntry}
 ProjectileReplication.LastLocalAimPosition = nil :: Vector3?
 ProjectileReplication.SetUpCalled = false
@@ -31,6 +68,23 @@ type QueuedProjectileEntry = {
     FirePart: BasePart,
     PresetName: string
 }
+export type ProjectileAppearance = Types.ProjectileAppearance
+export type ProjectilePreset = Types.ProjectilePreset
+export type Projectile = Types.Projectile
+export type StandardConfiguration = Types.StandardConfiguration
+
+export type Event<T...> = Event.Event<T...>
+export type VibrationMotor = VibrationMotor.VibrationMotor
+export type BaseInput = BaseInput.BaseInput
+export type CombinedInput = CombinedInput.CombinedInput
+export type GamepadInput = GamepadInput.GamepadInput
+export type MouseInput = MouseInput.MouseInput
+export type TouchInput = TouchInput.TouchInput
+export type BaseCrosshair = BaseCrosshair.BaseCrosshair
+export type MouseCrosshair = MouseCrosshair.MouseCrosshair
+export type VRCrosshair = VRCrosshair.VRCrosshair
+export type WeaponState = WeaponState.WeaponState
+
 export type ProjectileReplication = typeof(ProjectileReplication)
 
 
