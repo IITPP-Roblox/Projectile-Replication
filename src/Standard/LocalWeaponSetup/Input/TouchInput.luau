@@ -127,6 +127,9 @@ function TouchInput.CreateDisplay(): TouchInputDisplay
         local ViewSize = ScreenGui.AbsoluteSize
         local IsSmallScreen = (math.min(ViewSize.X, ViewSize.Y) <= 500)
 
+        --Update button visibility.
+        ScreenGui.Enabled = (UserInputService.PreferredInput == Enum.PreferredInput.Touch)
+
         --Update the button sizes.
         local FireButtonSize = (IsSmallScreen and 70 or 120)
         LeftFireButton.Size = UDim2.new(0, FireButtonSize, 0, FireButtonSize)
@@ -152,6 +155,7 @@ function TouchInput.CreateDisplay(): TouchInputDisplay
     --Update the buttons.
     UpdateButtons()
     ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateButtons)
+    UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(UpdateButtons)
 
     --Return the object.
     return {
