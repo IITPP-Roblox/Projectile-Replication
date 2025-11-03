@@ -4,7 +4,7 @@ repository = "https://github.com/IITPP-Roblox/Projectile-Replication"
 description = "Manages projectiles on the client and server."
 license = "MIT"
 authors = ["IITPP-Roblox"]
-version = "1.9.0"
+version = "1.9.1"
 
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
