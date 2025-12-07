@@ -30,7 +30,7 @@ lot more involved to set up.
 
 ### Audio (Optional)
 Projectile sounds use LocalAudio for playing sounds. See the
-[setup for LocalAudio](https://github.com/IITPP-Roblox/LocalTween#readme)
+[setup for LocalAudio](https://github.com/IITPP-Roblox/LocalAudio#readme)
 for how to add sounds.
 
 ### Projectile Presets
