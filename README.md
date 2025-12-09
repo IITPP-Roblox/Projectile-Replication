@@ -30,7 +30,7 @@ lot more involved to set up.
 
 ### Audio (Optional)
 Projectile sounds use LocalAudio for playing sounds. See the
-[setup for LocalAudio](https://github.com/IITPP-Roblox/LocalTween#readme)
+[setup for LocalAudio](https://github.com/IITPP-Roblox/LocalAudio#readme)
 for how to add sounds.
 
 ### Projectile Presets
@@ -51,7 +51,7 @@ schema of the data for each preset is the following:
   * `{[string]: any}? Properties` - Additional properties to set. `Size`,
     `CFrame`, and `Parent` will be overwritten if set.
 
-For an example, [see the demo projectile](./demo/ReplicatedStorage/Data/ProjectilePresets/DemoProjectile.lua).
+For an example, [see the demo projectile](./demo/ReplicatedStorage/Data/ProjectilePresets/DemoProjectile.luau).
 
 ### Server / Client Setup
 In order to set up the replication on both the client and server,
@@ -60,11 +60,11 @@ client and server.
 
 ### Standard Weapons (Optional)
 For the Thermal Power Plant, a standard set of scripts are used for all
-disinfectors. They are loaded using the helper [`Standard` module's](./src/Standard/init.lua)
+disinfectors. They are loaded using the helper [`Standard` module's](./src/Standard/init.luau)
 `CreateStandardWeapon` method. In order to use it, the `Tool` must have
 a `Handle`. The `Handle` must have an `Attachment` named `"StartAttachment"`
 and optional `Attachment` for the left arm named `"LeftHandHold"`.
-There also must be a `Configuration` like [the demo configuration](demo/ServerScriptService/DemoConfiguration.lua).
+There also must be a `Configuration` like [the demo configuration](demo/ServerScriptService/DemoConfiguration.luau).
 
 ### Nexus VR Character Model (Optional)
 The standard weapons support [Nexus VR Character Model](https://github.com/TheNexusAvenger/Nexus-VR-Character-Model).
