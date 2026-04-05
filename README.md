@@ -36,7 +36,7 @@ for how to add sounds.
 ### Projectile Presets
 The projectiles in the game are stored as data that define the properties and
 behavior of the projectiles. At the moment, they are hard-coded to be
-`MdouleScript`s under `ReplicatedStorage.Data.ProjectilePresets`. The
+`ModuleScript`s under `ReplicatedStorage.Data.ProjectilePresets`. The
 schema of the data for each preset is the following:
 * `number Speed` - Speed that the projectile moves at.
 * `number LifetimeSeconds` - The maximum lifetime of the projectile in seconds.
