@@ -18,7 +18,7 @@ while not ProjectileReplicationModule do
     ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value
     task.wait()
 end
-local LocalTween = require(ProjectileReplicationModule:WaitForChild("LocalTween")) :: any
+local LocalTween = require(ProjectileReplicationModule:WaitForChild("Packages"):WaitForChild("LocalTween")) :: any
 
 local State = Tool:WaitForChild("State")
 local ChargedPercentValue = State:WaitForChild("ChargedPercent")
