@@ -82,8 +82,18 @@ Tries to reload the weapon.
 --]]
 function WeaponState.Reload(self: WeaponState): ()
     if self.ReloadingValue.Value then return end
+    local Character = Players.LocalPlayer.Character
+    if not Character or self.Tool.Parent ~= Character then return end
     self.ReloadingValue.Value = true
     self.ProjectileReplication:Reload(Players.LocalPlayer, self.Tool)
+end
+
+--[[
+Clears the local reloading state when the weapon is unequipped.
+--]]
+function WeaponState.CancelReload(self: WeaponState): ()
+    if self.Configuration.AllowUnequippedReload then return end
+    self.ReloadingValue.Value = false
 end
 
 --[[

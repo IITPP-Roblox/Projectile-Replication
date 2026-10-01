@@ -203,12 +203,21 @@ function ProjectileReplication.Reload(self: ProjectileReplication, Player: Playe
         local RemainingRoundsValue = State:FindFirstChild("RemainingRounds") :: IntValue
         local ReloadingValue = State:FindFirstChild("Reloading") :: BoolValue
         if not RemainingRoundsValue or not ReloadingValue then return end
+        if ReloadingValue.Value then return end
+
+        --Return if the tool is not equipped, unless unequipped reloads are allowed.
+        local AllowUnequippedReload = (ConfigurationData.AllowUnequippedReload == true)
+        if not AllowUnequippedReload then
+            if NewTool.Parent ~= Character then return end
+            if Tool and Tool ~= NewTool then return end
+        end
 
         --Play the reload sound.
         local StartAttachment = Handle:FindFirstChild("StartAttachment")
+        local ReloadSound = nil
         if StartAttachment and NewTool.Parent == Character then
             local PresetModule = Presets:FindFirstChild(ConfigurationData.ProjectilePreset)
-            local ReloadSound = Configuration and ConfigurationData.ReloadSound or (require(PresetModule) :: Types.ProjectilePreset).DefaultReloadSound
+            ReloadSound = ConfigurationData.ReloadSound or (PresetModule and (require(PresetModule) :: Types.ProjectilePreset).DefaultReloadSound)
             if ReloadSound then
                 LocalAudio:PlayAudio(ReloadSound, StartAttachment)
             end
@@ -216,8 +225,30 @@ function ProjectileReplication.Reload(self: ProjectileReplication, Player: Playe
 
         --Reload the weapon.
         ReloadingValue.Value = true
-        task.wait(ConfigurationData.ReloadTime)
-        RemainingRoundsValue.Value = ConfigurationData.TotalRounds
+        local Cancelled = false
+        local ToolAncestryChangedEvent = nil
+        if not AllowUnequippedReload then
+            ToolAncestryChangedEvent = NewTool.AncestryChanged:Connect(function()
+                if NewTool.Parent == Character and Character.Parent then return end
+                Cancelled = true
+            end)
+        end
+        local ReloadEndTime = os.clock() + ConfigurationData.ReloadTime
+        while not Cancelled and os.clock() < ReloadEndTime do
+            task.wait()
+        end
+        if ToolAncestryChangedEvent then
+            ToolAncestryChangedEvent:Disconnect()
+        end
+
+        --Complete or cancel the reload.
+        if Cancelled then
+            if ReloadSound and StartAttachment then
+                LocalAudio:StopAudio(ReloadSound, StartAttachment)
+            end
+        else
+            RemainingRoundsValue.Value = ConfigurationData.TotalRounds
+        end
         ReloadingValue.Value = false
     end
 end

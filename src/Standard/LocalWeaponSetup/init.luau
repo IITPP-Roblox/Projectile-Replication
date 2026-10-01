@@ -91,6 +91,7 @@ function LocalWeaponSetup.SetupTool(self: LocalWeaponSetup, Tool: Tool): ()
     Tool.Unequipped:Connect(function()
         Equipped = false
         WeaponState:StopFiring()
+        WeaponState:CancelReload()
 
         if CurrentCrosshair then
             CurrentCrosshair:Destroy()
