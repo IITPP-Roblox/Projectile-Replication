@@ -195,15 +195,14 @@ function ProjectileReplication.Reload(self: ProjectileReplication, Player: Playe
         if not Character then return end
         local NewTool = Character:FindFirstChildOfClass("Tool") or Tool :: Tool
         if not NewTool then return end
+        if NewTool:GetAttribute("ReloadStartTime") then return end
         local State = NewTool:FindFirstChild("State") :: Folder
         local Configuration = NewTool:FindFirstChild("Configuration") :: ModuleScript
         local Handle = NewTool:FindFirstChild("Handle") :: BasePart
         if not State or not Configuration or not Handle then return end
         local ConfigurationData = require(Configuration) :: Types.StandardConfiguration
         local RemainingRoundsValue = State:FindFirstChild("RemainingRounds") :: IntValue
-        local ReloadingValue = State:FindFirstChild("Reloading") :: BoolValue
-        if not RemainingRoundsValue or not ReloadingValue then return end
-        if ReloadingValue.Value then return end
+        if not RemainingRoundsValue then return end
 
         --Return if the tool is not equipped, unless unequipped reloads are allowed.
         local AllowUnequippedReload = (ConfigurationData.AllowUnequippedReload == true)
@@ -224,32 +223,25 @@ function ProjectileReplication.Reload(self: ProjectileReplication, Player: Playe
         end
 
         --Reload the weapon.
-        ReloadingValue.Value = true
-        local Cancelled = false
-        local ToolAncestryChangedEvent = nil
+        --Unequipping clears the start time, which cancels the reload.
+        local ReloadStartTime = tick()
+        NewTool:SetAttribute("ReloadStartTime", ReloadStartTime)
+        local UnequippedEvent = nil
         if not AllowUnequippedReload then
-            ToolAncestryChangedEvent = NewTool.AncestryChanged:Connect(function()
-                if NewTool.Parent == Character and Character.Parent then return end
-                Cancelled = true
+            UnequippedEvent = NewTool.Unequipped:Connect(function()
+                NewTool:SetAttribute("ReloadStartTime", nil)
+                if ReloadSound and StartAttachment then
+                    LocalAudio:StopAudio(ReloadSound, StartAttachment)
+                end
             end)
         end
-        local ReloadEndTime = os.clock() + ConfigurationData.ReloadTime
-        while not Cancelled and os.clock() < ReloadEndTime do
-            task.wait()
+        task.wait(ConfigurationData.ReloadTime)
+        if UnequippedEvent then
+            UnequippedEvent:Disconnect()
         end
-        if ToolAncestryChangedEvent then
-            ToolAncestryChangedEvent:Disconnect()
-        end
-
-        --Complete or cancel the reload.
-        if Cancelled then
-            if ReloadSound and StartAttachment then
-                LocalAudio:StopAudio(ReloadSound, StartAttachment)
-            end
-        else
-            RemainingRoundsValue.Value = ConfigurationData.TotalRounds
-        end
-        ReloadingValue.Value = false
+        if NewTool:GetAttribute("ReloadStartTime") ~= ReloadStartTime then return end
+        RemainingRoundsValue.Value = ConfigurationData.TotalRounds
+        NewTool:SetAttribute("ReloadStartTime", nil)
     end
 end
 
@@ -450,13 +442,12 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
             if not Handle or not State or not Configuration then return end
             local ConfigurationData = require(Configuration) :: Types.StandardConfiguration
             local RemainingRoundsValue = State:FindFirstChild("RemainingRounds") :: IntValue
-            local ReloadingValue = State:FindFirstChild("Reloading") :: BoolValue
             local LastFireTimeValue = State:FindFirstChild("LastFireTime") :: NumberValue
             local LastFireRemainingRoundsValue = State:FindFirstChild("LastFireRemainingRounds") :: NumberValue
-            if not RemainingRoundsValue or not ReloadingValue then return end
+            if not RemainingRoundsValue then return end
 
             --Return if the firing is invalid.
-            if ReloadingValue.Value then return end
+            if Tool:GetAttribute("ReloadStartTime") then return end
             if RemainingRoundsValue.Value <= 0 then return end
             if (StartCFrame.Position - Handle.Position).Magnitude > 10 and not Humnanoid.Sit and not Humnanoid.SeatPart then return end --Local trams do not replicate to the server, so the projectiles shots will claim to be far away.
             local IsCloseToLastFire = (tick() - LastFireTimeValue.Value < ConfigurationData.CooldownTime * 0.5)

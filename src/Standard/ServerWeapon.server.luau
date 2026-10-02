@@ -22,7 +22,6 @@ local LocalTween = require(ProjectileReplicationModule:WaitForChild("Packages"):
 
 local State = Tool:WaitForChild("State")
 local ChargedPercentValue = State:WaitForChild("ChargedPercent")
-local ReloadingValue = State:WaitForChild("Reloading")
 
 local Equipped = false
 local CurrentTween = nil
@@ -95,8 +94,8 @@ Tool.Unequipped:Connect(function()
     ChargeDownSound:Stop()
 end)
 
-ReloadingValue.Changed:Connect(function()
-    if not ReloadingValue.Value then return end
+Tool:GetAttributeChangedSignal("ReloadStartTime"):Connect(function()
+    if not Tool:GetAttribute("ReloadStartTime") then return end
     ChargeDown()
 end)
 

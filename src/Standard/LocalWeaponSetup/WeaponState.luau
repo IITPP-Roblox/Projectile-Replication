@@ -20,7 +20,6 @@ export type WeaponState = {
     Tool: Instance,
     Handle: BasePart,
     StartAttachment: Attachment,
-    ReloadingValue: BoolValue,
     RemainingRoundsValue: IntValue,
     ChargedPercentValue: NumberValue?,
     ProjectileReplication: any,
@@ -42,7 +41,6 @@ function WeaponState.new(Tool: Instance): WeaponState
         Tool = Tool,
         Handle = Handle,
         StartAttachment = Handle:WaitForChild("StartAttachment") :: Attachment,
-        ReloadingValue = State:WaitForChild("Reloading") :: BoolValue,
         RemainingRoundsValue = State:WaitForChild("RemainingRounds") :: IntValue,
         ChargedPercentValue = State:FindFirstChild("ChargedPercent") :: any, --Casting to NumberValue? does not work.
         --ProjectileReplication is stored internally to prevent a cyclic require.
@@ -81,10 +79,8 @@ end
 Tries to reload the weapon.
 --]]
 function WeaponState.Reload(self: WeaponState): ()
-    if self.ReloadingValue.Value then return end
-    local Character = Players.LocalPlayer.Character
-    if not Character or self.Tool.Parent ~= Character then return end
-    self.ReloadingValue.Value = true
+    if self.Tool:GetAttribute("ReloadStartTime") then return end
+    self.Tool:SetAttribute("ReloadStartTime", tick())
     self.ProjectileReplication:Reload(Players.LocalPlayer, self.Tool)
 end
 
@@ -93,7 +89,7 @@ Clears the local reloading state when the weapon is unequipped.
 --]]
 function WeaponState.CancelReload(self: WeaponState): ()
     if self.Configuration.AllowUnequippedReload then return end
-    self.ReloadingValue.Value = false
+    self.Tool:SetAttribute("ReloadStartTime", nil)
 end
 
 --[[
@@ -101,7 +97,7 @@ Tries to fire the weapon once.
 --]]
 function WeaponState.TryFire(self: WeaponState): ()
     --Return if there are no rounds or the last fire was too recent.
-    if self.ReloadingValue.Value then return end
+    if self.Tool:GetAttribute("ReloadStartTime") then return end
     if self.RemainingRoundsValue.Value <= 0 then
         self:Reload()
         return

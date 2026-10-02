@@ -39,11 +39,6 @@ function Standard.CreateStandardWeapon(WeaponModel: Tool): ()
     RemainingRoundsValue.Value = ConfigurationData.TotalRounds
     RemainingRoundsValue.Parent = StateFolder
 
-    local ReloadingValue = Instance.new("BoolValue")
-    ReloadingValue.Name = "Reloading"
-    ReloadingValue.Value = false
-    ReloadingValue.Parent = StateFolder
-
     --Clone the standard scripts.
     local ProjectileReplicationReferenceValue = Instance.new("ObjectValue")
     ProjectileReplicationReferenceValue.Name = "ProjectileReplicationReference"

@@ -40,7 +40,6 @@ function BaseCrosshair.ConnectStandard(self: BaseCrosshair,Tool: Tool): ()
     local Configuration = require(Tool:WaitForChild("Configuration")) :: any
     local State = Tool:WaitForChild("State")
     local RemainingRounds = State:WaitForChild("RemainingRounds") :: IntValue
-    local ReloadingValue = State:WaitForChild("Reloading") :: BoolValue
 
     --[[
     Converts a number of projectiles to a display number.
@@ -50,9 +49,9 @@ function BaseCrosshair.ConnectStandard(self: BaseCrosshair,Tool: Tool): ()
     end
 
     --Connect reloading.
-    self:SetReloading(ReloadingValue.Value)
-    ReloadingValue:GetPropertyChangedSignal("Value"):Connect(function()
-        self:SetReloading(ReloadingValue.Value)
+    self:SetReloading(Tool:GetAttribute("ReloadStartTime") ~= nil)
+    Tool:GetAttributeChangedSignal("ReloadStartTime"):Connect(function()
+        self:SetReloading(Tool:GetAttribute("ReloadStartTime") ~= nil)
     end)
 
     --Connect ammo.
