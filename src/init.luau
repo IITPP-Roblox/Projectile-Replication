@@ -228,7 +228,7 @@ function ProjectileReplication.Reload(self: ProjectileReplication, Player: Playe
         NewTool:SetAttribute("ReloadStartTime", ReloadStartTime)
         local UnequippedEvent = nil
         if not AllowUnequippedReload then
-            UnequippedEvent = NewTool.Unequipped:Connect(function()
+            UnequippedEvent = NewTool.Unequipped:Once(function()
                 NewTool:SetAttribute("ReloadStartTime", nil)
                 if ReloadSound and StartAttachment then
                     LocalAudio:StopAudio(ReloadSound, StartAttachment)
