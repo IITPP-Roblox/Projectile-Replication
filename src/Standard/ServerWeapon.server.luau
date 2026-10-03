@@ -18,11 +18,10 @@ while not ProjectileReplicationModule do
     ProjectileReplicationModule = Tool:WaitForChild("ProjectileReplicationReference").Value
     task.wait()
 end
-local LocalTween = require(ProjectileReplicationModule:WaitForChild("LocalTween")) :: any
+local LocalTween = require(ProjectileReplicationModule:WaitForChild("Packages"):WaitForChild("LocalTween")) :: any
 
 local State = Tool:WaitForChild("State")
 local ChargedPercentValue = State:WaitForChild("ChargedPercent")
-local ReloadingValue = State:WaitForChild("Reloading")
 
 local Equipped = false
 local CurrentTween = nil
@@ -95,8 +94,8 @@ Tool.Unequipped:Connect(function()
     ChargeDownSound:Stop()
 end)
 
-ReloadingValue.Changed:Connect(function()
-    if not ReloadingValue.Value then return end
+Tool:GetAttributeChangedSignal("ReloadStartTime"):Connect(function()
+    if not Tool:GetAttribute("ReloadStartTime") then return end
     ChargeDown()
 end)
 

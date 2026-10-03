@@ -39,6 +39,7 @@ export type StandardConfiguration = {
     TotalRounds: number,
     FireSound: string?,
     ReloadSound: string?,
+    AllowUnequippedReload: boolean?,
     AimRotationOffset: CFrame?,
     AnimationJoints: {[string]: {[string]: CFrame}},
     ChargeUpTime: number?,

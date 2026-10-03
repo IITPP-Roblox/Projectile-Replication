@@ -37,6 +37,10 @@ return {
     --If nil, the default in the projectile preset will be used.
     ReloadSound = nil,
 
+    --If true, reloads continue after the gun is unequipped.
+    --If nil or false, unequipping the gun cancels the reload.
+    AllowUnequippedReload = nil,
+
     --Additional rotation applied to aiming.
     --If nil, no additional rotation will be applied.
     AimRotationOffset = CFrame.Angles(0, math.rad(-50), 0),
