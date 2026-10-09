@@ -87,6 +87,17 @@ export type WeaponState = WeaponState.WeaponState
 
 export type ProjectileReplication = typeof(ProjectileReplication)
 
+--[[
+Returns a character joint by name.
+Characters use AnimationConstraints for joints (Avatar Joint Upgrade).
+--]]
+local function GetJoint(Part: Instance, JointName: string): AnimationConstraint?
+    local Joint = Part:FindFirstChild(JointName)
+    if Joint and Joint:IsA("AnimationConstraint") then
+        return Joint
+    end
+    return nil
+end
 
 
 --Create or get the RemoteEvent.
@@ -263,11 +274,11 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
         local RightUpperArm = Character:FindFirstChild("RightUpperArm") :: BasePart
         if not Tool or not Humanoid or not Head or not LowerTorso or not UpperTorso or not RightUpperArm or not HumanoidRootPart then return end
         local Handle = Tool:FindFirstChild("Handle") :: BasePart
-        local RootRigAttachment = HumanoidRootPart:FindFirstChild("RootRigAttachment") :: Attachment
-        local Root = LowerTorso:FindFirstChild("Root") :: Motor6D
+        local Root = GetJoint(LowerTorso, "Root")
+        local RootAttachment0 = Root and Root.Attachment0
         local RightShoulderRigAttachment = UpperTorso:FindFirstChild("RightShoulderRigAttachment") :: Attachment
-        local RightShoulder = RightUpperArm:FindFirstChild("RightShoulder") :: Motor6D
-        if not Handle or not RootRigAttachment or not Root or not RightShoulderRigAttachment or not RightShoulder then return end
+        local RightShoulder = GetJoint(RightUpperArm, "RightShoulder")
+        if not Handle or not Root or not RootAttachment0 or not RightShoulderRigAttachment or not RightShoulder then return end
 
         --Get the configuration.
         local ToolConfigurationModule = Tool:FindFirstChild("Configuration")
@@ -298,8 +309,10 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
             end)
         end
 
-        --Set the root C0.
-        Root.C0 = RootRigAttachment.CFrame * CharacterRotation
+        --Rotate the character.
+        --This is done on Attachment0 instead of the Transform so that the left arm IKControl (solved before PreSimulation) sees the rotation.
+        local RootAttachment0CFrame = RootAttachment0.CFrame
+        RootAttachment0.CFrame = RootAttachment0CFrame * CharacterRotation
 
         --Store the update function.
         UpdateAimFunctions[Character] = function(NewAimPosition: Vector3)
@@ -316,7 +329,7 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
             local Part = Character:FindFirstChild(PartName)
             if Part then
                 for JointName, TransformCFrame in PartJoints do
-                    local Joint = Part:FindFirstChild(JointName) :: Motor6D
+                    local Joint = GetJoint(Part, JointName)
                     if Joint then
                         Joint.Transform = TransformCFrame
                     end
@@ -325,19 +338,19 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
         end
 
         --Connect overriding the animations.
-        local UpdateAnimationsEvent = RunService.Stepped:Connect(function()
-            --Update the aim.
-            if AimPosition then
-                local AttachmentGoal = CFrame.new(RightShoulderRigAttachment.WorldCFrame.Position) * CFrame.new(-Head.Position) * CFrame.new(Head.Position, AimPosition)
-                local ShouldAimCFrame = RightShoulderRigAttachment.WorldCFrame:Inverse() * AttachmentGoal
-                RightShoulder.C0 = RightShoulderRigAttachment.CFrame * ShouldAimCFrame * CharacterRotation
-            end
-
+        local UpdateAnimationsEvent = RunService.PreSimulation:Connect(function()
             --Set the joints.
             if ToolConfiguration.AnimationJoints then
                 for PartName, PartJoints in ToolConfiguration.AnimationJoints do
                     UpdateJoint(PartName, PartJoints)
                 end
+            end
+
+            --Update the aim.
+            if AimPosition then
+                local AttachmentGoal = CFrame.new(RightShoulderRigAttachment.WorldCFrame.Position) * CFrame.new(-Head.Position) * CFrame.new(Head.Position, AimPosition)
+                local ShouldAimCFrame = RightShoulderRigAttachment.WorldCFrame:Inverse() * AttachmentGoal
+                RightShoulder.Transform = ShouldAimCFrame * CharacterRotation * RightShoulder.Transform
             end
         end)
 
@@ -355,8 +368,8 @@ function ProjectileReplication.Aim(self: ProjectileReplication, Player: Player, 
             end
 
             --Reset the root and shoulder.
-            RightShoulder.C0 = RightShoulderRigAttachment.CFrame
-            Root.C0 = RootRigAttachment.CFrame
+            RightShoulder.Transform = CFrame.identity
+            RootAttachment0.CFrame = RootAttachment0CFrame
 
             --Reset the left arm.
             if LeftArmAppendage then
