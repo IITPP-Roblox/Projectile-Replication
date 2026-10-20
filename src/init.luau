@@ -2,6 +2,7 @@
 --!strict
 
 local BYTES_PER_AIM_POSITION = 20 --8 bytes for user id + 3 * 4 bytes for position.
+local MAX_HIT_PART_DRIFT = 10 --How far a part can move on the server from where the shooter saw it.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -58,6 +59,8 @@ ProjectileReplication.StandardComponents = {
 ProjectileReplication.QueuedProjectiles = {} :: {QueuedProjectileEntry}
 ProjectileReplication.LastLocalAimPosition = nil :: Vector3?
 ProjectileReplication.SetUpCalled = false
+ProjectileReplication.ClientShots = {} :: {[Player]: {[number]: ClientShot}}
+local NextShotId = 0
 local UpdateAimFunctions = {}
 setmetatable(UpdateAimFunctions, {__mode="k"})
 
@@ -67,6 +70,12 @@ type QueuedProjectileEntry = {
     Source: Model,
     FirePart: BasePart,
     PresetName: string
+}
+type ClientShot = {
+    Projectile: Types.Projectile,
+    StartCFrame: CFrame,
+    Speed: number,
+    FireTime: number,
 }
 export type ProjectileAppearance = Types.ProjectileAppearance
 export type ProjectilePreset = Types.ProjectilePreset
@@ -92,15 +101,21 @@ export type ProjectileReplication = typeof(ProjectileReplication)
 --Create or get the RemoteEvent.
 local FireProjectileEvent: RemoteEvent = nil
 local ReloadEvent: RemoteEvent = nil
+local HitProjectileEvent: RemoteEvent = nil
 local UpdateAimEvent: UnreliableRemoteEvent = nil
 if RunService:IsClient() then
     FireProjectileEvent = script:WaitForChild("FireProjectile")
+    HitProjectileEvent = script:WaitForChild("HitProjectile")
     ReloadEvent = script:WaitForChild("Reload")
     UpdateAimEvent = script:WaitForChild("UpdateAim")
 else
     FireProjectileEvent = script:FindFirstChild("FireProjectile") or Instance.new("RemoteEvent")
     FireProjectileEvent.Name = "FireProjectile"
     FireProjectileEvent.Parent = script
+
+    HitProjectileEvent = script:FindFirstChild("HitProjectile") or Instance.new("RemoteEvent")
+    HitProjectileEvent.Name = "HitProjectile"
+    HitProjectileEvent.Parent = script
 
     ReloadEvent = script:FindFirstChild("Reload") or Instance.new("RemoteEvent")
     ReloadEvent.Name = "Reload"
@@ -115,8 +130,9 @@ end
 
 --[[
 Fires a projectile.
+On the server, a ShotId means hits are reported by the client that fired it.
 --]]
-function ProjectileReplication.Fire(self: ProjectileReplication, StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?): ()
+function ProjectileReplication.Fire(self: ProjectileReplication, StartCFrame: CFrame, FirePart: BasePart, PresetName: string, Source: Model?, IgnoreReplication: boolean?, ShotId: number?): ()
     --Set the source.
     if RunService:IsClient() and not Source then
         Source = Players.LocalPlayer.Character
@@ -154,7 +170,13 @@ function ProjectileReplication.Fire(self: ProjectileReplication, StartCFrame: CF
     --Handle the replication.
     if IgnoreReplication ~= true then
         if RunService:IsClient() then
-            FireProjectileEvent:FireServer(StartCFrame)
+            --Hits are reported from the client so they match what the player saw.
+            NextShotId += 1
+            local CurrentShotId = NextShotId
+            FireProjectileEvent:FireServer(StartCFrame, CurrentShotId)
+            ProjectileObject.OnHit:Connect(function(HitPart: BasePart, HitPosition: Vector3)
+                HitProjectileEvent:FireServer(CurrentShotId, HitPart, HitPosition)
+            end)
         else
             table.insert(self.QueuedProjectiles, {
                 SourcePlayer = Players:GetPlayerFromCharacter(Source),
@@ -166,11 +188,32 @@ function ProjectileReplication.Fire(self: ProjectileReplication, StartCFrame: CF
         end
     end
 
-    --Fire the projectile.
-    if Configuration and Configuration.FireDelay then
-        task.wait(Configuration.FireDelay)
+    --Store the shot for client-reported hits
+    local FireDelay = (Configuration and Configuration.FireDelay) or 0
+    local SourcePlayer = Players:GetPlayerFromCharacter(Source)
+    local Shots = SourcePlayer and self.ClientShots[SourcePlayer]
+    local HitsReportedByClient = (ShotId ~= nil and Shots ~= nil)
+    if ShotId and Shots then
+        --Hits are reported by the client, so the server does not simulate the projectile
+        Shots[ShotId] = {
+            Projectile = ProjectileObject :: any,
+            StartCFrame = StartCFrame,
+            Speed = Preset.Speed,
+            FireTime = tick() + FireDelay,
+        }
+        task.delay(FireDelay + Preset.LifetimeSeconds + 1, function()
+            Shots[ShotId] = nil
+            ProjectileObject:Destroy()
+        end)
     end
-    ProjectileObject:Fire(StartCFrame, Preset.Speed, Preset.LifetimeSeconds, {Source or Players.LocalPlayer.Character})
+
+    --Fire the projectile.
+    if FireDelay > 0 then
+        task.wait(FireDelay)
+    end
+    if not HitsReportedByClient then
+        ProjectileObject:Fire(StartCFrame, Preset.Speed, Preset.LifetimeSeconds, {Source or Players.LocalPlayer.Character})
+    end
     if RunService:IsClient() and Preset.OnFireClient then
         task.spawn(function()
             Preset.OnFireClient(ProjectileObject :: any)
@@ -429,7 +472,7 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
         end)
     else
         --Connect requests for projectiles being fired.
-        FireProjectileEvent.OnServerEvent:Connect(function(Player: Player, StartCFrame: CFrame)
+        FireProjectileEvent.OnServerEvent:Connect(function(Player: Player, StartCFrame: CFrame, ShotId: number?)
             --Get the weapon that was fired.
             local Character = Player.Character :: Model
             if not Character then return end
@@ -457,7 +500,50 @@ function ProjectileReplication.SetUp(self: ProjectileReplication): ()
             LastFireTimeValue.Value = tick()
             LastFireRemainingRoundsValue.Value = (IsCloseToLastFire and LastFireRemainingRoundsValue.Value - 1 or (ConfigurationData.ProjectilesPerRound or 1) - 1)
             RemainingRoundsValue.Value = RemainingRoundsValue.Value - 1
-            self:Fire(StartCFrame, Handle, ConfigurationData.ProjectilePreset, Character)
+            self:Fire(StartCFrame, Handle, ConfigurationData.ProjectilePreset, Character, nil, typeof(ShotId) == "number" and ShotId or nil)
+        end)
+
+        --Connect hits reported by the client that fired the projectile.
+        Players.PlayerAdded:Connect(function(Player)
+            self.ClientShots[Player] = {}
+        end)
+        for _, Player in Players:GetPlayers() do
+            self.ClientShots[Player] = {}
+        end
+        Players.PlayerRemoving:Connect(function(Player)
+            self.ClientShots[Player] = nil
+        end)
+        HitProjectileEvent.OnServerEvent:Connect(function(Player: Player, ShotId: number, HitPart: BasePart, HitPosition: Vector3)
+            local Shots = self.ClientShots[Player]
+            local Shot = Shots and Shots[ShotId]
+            if not Shot then return end
+            if typeof(HitPart) ~= "Instance" or not HitPart:IsA("BasePart") or typeof(HitPosition) ~= "Vector3" then return end
+            Shots[ShotId] = nil
+
+            -- Reject hits that are off the projectile path, farther than it could travel, or too far from the part
+            local Offset = Shot.StartCFrame:PointToObjectSpace(HitPosition)
+            if Vector2.new(Offset.X, Offset.Y).Magnitude > 1 or Offset.Z > 1 then return end
+            if -Offset.Z > Shot.Speed * (tick() - Shot.FireTime + 1) then return end
+            if (HitPart.Position - HitPosition).Magnitude > (HitPart.Size.Magnitude / 2) + MAX_HIT_PART_DRIFT then return end
+
+            --Reject hits blocked by the world
+            local StartPosition = Shot.StartCFrame.Position
+            local HitDistance = (HitPosition - StartPosition).Magnitude
+            if HitDistance > 0.5 then
+                local EndPosition = StartPosition + ((HitPosition - StartPosition).Unit * (HitDistance - 0.5))
+                local IgnoreList: {Instance} = {HitPart}
+                if Shot.Projectile.Source then
+                    table.insert(IgnoreList, Shot.Projectile.Source)
+                end
+                while true do
+                    local BlockingPart = Projectile.RayCast(StartPosition, EndPosition, IgnoreList)
+                    if not BlockingPart then break end
+                    local BlockingModel = BlockingPart.Parent
+                    if not BlockingModel or not BlockingModel:FindFirstChildOfClass("Humanoid") then return end
+                    table.insert(IgnoreList, BlockingModel)
+                end
+            end
+            Shot.Projectile.OnHitEvent:Fire(HitPart, HitPosition, Shot.Projectile)
         end)
 
         --Connect requests for reloading.
